@@ -95,6 +95,23 @@ def grid(sweep):
             for lr in lrs:
                 cfgs.append(dict(dataset="cifar10", arch="cnn", opt=opt, lr=lr, bs=128, seed=seed, n_eval=1024,
                                  max_epochs=150, level="lean", targets=[1.0, 0.1, 0.01], time_limit=1e9))
+    elif sweep == "adam_orbit":
+        # Why does Adam-Q stall? Hold Adam at a chosen orbit point by teleporting every 100 steps
+        # (function-preserving, Adam moments transformed covariantly): to the minimum-trace point,
+        # or to the minimum-norm (balanced) point, where Adam-Q ends up. Same configs as func_adamq.
+        for seed, (lr, bs), to in itertools.product([0, 1], [(3e-4, 32), (6e-4, 128), (1.2e-3, 512)],
+                                                    ["min", "balanced"]):
+            cfgs.append(dict(dataset="cifar10", arch="mlp", opt="adam", lr=lr, bs=bs, seed=seed,
+                             max_epochs=300, level="lean", targets=[1.0, 0.3, 0.1, 0.03, 0.01],
+                             teleport_every=100, teleport_to=to, save_model=False, time_limit=1e9))
+    elif sweep == "depth_cifar10":
+        # Does the coordinate factor grow with depth? Uniform-width MLPs, He init, bs 128, the main sweep's
+        # larger base rate per optimizer (square-root scaled to bs 128).
+        for seed, L, (opt, lr) in itertools.product([0, 1, 2], [1, 2, 4, 8],
+                                                     [("sgd", 0.06), ("sgdm", 0.006), ("adam", 6e-4)]):
+            cfgs.append(dict(dataset="cifar10", arch=f"mlp_d{L}_w128", opt=opt, lr=lr, bs=128, seed=seed,
+                             max_epochs=300, level="lean", targets=[1.0, 0.3, 0.1], save_model=False,
+                             time_limit=1e9))
     else:
         raise ValueError(sweep)
     return cfgs
