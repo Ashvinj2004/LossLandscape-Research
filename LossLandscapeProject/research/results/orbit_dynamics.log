@@ -1,0 +1,27 @@
+26 runs
+[1/26] mnist_sgd_lr0.12_ln0.0_s1 ep600 loss 0.000 excess1 1.19->1.88 excess_half 2.07->2.79 t=465s
+[2/26] mnist_sgd_lr0.06_ln0.0_s1 ep600 loss 0.000 excess1 1.10->1.79 excess_half 1.84->2.69 t=465s
+[3/26] mnist_adam_lr0.0002_ln0.2_s0 ep600 loss 0.215 excess1 1.15->1.13 excess_half 1.55->1.59 t=527s
+[4/26] mnist_adam_lr0.0006_ln0.2_s0 ep600 loss 0.217 excess1 1.19->1.51 excess_half 1.43->1.23 t=541s
+[5/26] mnist_adam_lr0.0006_ln0.0_s1 ep600 loss 0.000 excess1 1.24->1.30 excess_half 1.36->1.64 t=566s
+[6/26] mnist_adam_lr0.0002_ln0.0_s1 ep600 loss 0.000 excess1 1.12->1.56 excess_half 1.50->1.53 t=570s
+[7/26] mnist_sgd_lr0.12_ln0.2_s1 ep600 loss 0.195 excess1 1.22->1.16 excess_half 2.08->2.10 t=149s
+[8/26] mnist_sgd_lr0.06_ln0.2_s1 ep600 loss 0.198 excess1 1.13->1.33 excess_half 1.92->2.26 t=150s
+[9/26] mnist_adam_lr0.0002_ln0.2_s1 ep600 loss 0.219 excess1 1.10->1.16 excess_half 1.59->1.64 t=546s
+[10/26] mnist_adam_lr0.0006_ln0.2_s1 ep600 loss 0.206 excess1 1.11->1.51 excess_half 1.52->1.19 t=568s
+[11/26] cifar10_sgd_lr0.06_ln0.0_s0 ep400 loss 0.000 excess1 1.45->2.65 excess_half 3.75->5.28 t=550s
+[12/26] cifar10_sgd_lr0.12_ln0.0_s0 ep400 loss 0.000 excess1 1.40->1.95 excess_half 3.67->4.35 t=555s
+[13/26] cifar10_adam_lr0.0002_ln0.0_s0 ep400 loss 0.000 excess1 1.11->1.46 excess_half 2.55->3.33 t=655s
+[14/26] cifar10_adam_lr0.0006_ln0.0_s0 ep400 loss 0.000 excess1 1.13->1.23 excess_half 2.04->2.46 t=659s
+[15/26] cifar10_sgd_lr0.06_ln0.2_s0 ep400 loss 0.291 excess1 1.58->1.64 excess_half 3.98->3.98 t=316s
+[16/26] cifar10_sgd_lr0.12_ln0.2_s0 ep400 loss 0.298 excess1 1.43->1.24 excess_half 3.70->3.31 t=312s
+[17/26] cifar10_adam_lr0.0002_ln0.2_s0 ep400 loss 0.294 excess1 1.15->1.30 excess_half 2.80->2.92 t=382s
+[18/26] cifar10_adam_lr0.0006_ln0.2_s0 ep400 loss 0.280 excess1 1.10->1.28 excess_half 2.18->1.62 t=381s
+[19/26] cifar10_sgd_lr0.06_ln0.0_s1 ep400 loss 0.000 excess1 1.49->2.68 excess_half 3.83->5.29 t=296s
+[20/26] cifar10_sgd_lr0.12_ln0.0_s1 ep400 loss 0.000 excess1 1.46->2.00 excess_half 3.77->4.40 t=298s
+[21/26] cifar10_adam_lr0.0002_ln0.0_s1 ep400 loss 0.000 excess1 1.13->1.52 excess_half 2.62->3.50 t=407s
+[22/26] cifar10_adam_lr0.0006_ln0.0_s1 ep400 loss 0.000 excess1 1.09->1.25 excess_half 2.09->2.46 t=406s
+[23/26] cifar10_sgd_lr0.06_ln0.2_s1 ep400 loss 0.279 excess1 1.58->1.62 excess_half 4.03->3.97 t=335s
+[24/26] cifar10_sgd_lr0.12_ln0.2_s1 ep400 loss 0.293 excess1 1.48->1.25 excess_half 3.84->3.35 t=331s
+[25/26] cifar10_adam_lr0.0002_ln0.2_s1 ep400 loss 0.294 excess1 1.15->1.37 excess_half 2.81->3.07 t=328s
+[26/26] cifar10_adam_lr0.0006_ln0.2_s1 ep400 loss 0.299 excess1 1.10->1.26 excess_half 2.23->1.66 t=324s

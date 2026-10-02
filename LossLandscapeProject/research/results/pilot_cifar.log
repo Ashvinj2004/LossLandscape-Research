@@ -1,0 +1,13 @@
+pilot_cifar: 12 runs to do
+[1/12] cifar10_mlp_sgd_lr0.3_bs128_s0.json max_epochs 283s (elapsed 285s)
+[2/12] cifar10_mlp_sgd_lr0.01_bs128_s0.json max_epochs 285s (elapsed 287s)
+[3/12] cifar10_mlp_sgdm_lr0.001_bs128_s0.json max_epochs 300s (elapsed 302s)
+[4/12] cifar10_mlp_sgd_lr0.1_bs128_s0.json max_epochs 310s (elapsed 312s)
+[5/12] cifar10_mlp_sgd_lr0.03_bs128_s0.json max_epochs 332s (elapsed 334s)
+[6/12] cifar10_mlp_sgdm_lr0.003_bs128_s0.json reached 375s (elapsed 377s)
+[7/12] cifar10_mlp_sgdm_lr0.01_bs128_s0.json reached 280s (elapsed 565s)
+[8/12] cifar10_mlp_sgdm_lr0.03_bs128_s0.json max_epochs 372s (elapsed 659s)
+[9/12] cifar10_mlp_adam_lr0.0001_bs128_s0.json max_epochs 383s (elapsed 685s)
+[10/12] cifar10_mlp_adam_lr0.0003_bs128_s0.json max_epochs 412s (elapsed 724s)
+[11/12] cifar10_mlp_adam_lr0.001_bs128_s0.json max_epochs 421s (elapsed 755s)
+[12/12] cifar10_mlp_adam_lr0.003_bs128_s0.json max_epochs 381s (elapsed 758s)

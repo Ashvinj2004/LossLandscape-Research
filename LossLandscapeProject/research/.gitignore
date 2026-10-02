@@ -1,0 +1,6 @@
+# large or regenerable files
+data/
+.cache/
+checkpoints/
+__pycache__/
+*.pyc
