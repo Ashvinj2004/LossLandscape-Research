@@ -162,7 +162,11 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <span class="chip done"><span class="dot"></span>MLP experiments complete (MNIST, CIFAR-10)</span>
       <span class="chip done"><span class="dot"></span>Mechanism + causal test complete</span>
       <span class="chip done"><span class="dot"></span>CNN replication complete (18 runs)</span>
-      <span class="chip done"><span class="dot"></span>Paper draft written (1 placeholder left: code link)</span>
+      <span class="chip done"><span class="dot"></span>Long-horizon label-noise testbed (32 runs)</span>
+      <span class="chip done"><span class="dot"></span>Teleport test: negative result (32 runs)</span>
+      <span class="chip done"><span class="dot"></span>BatchNorm + weight decay (24 runs)</span>
+      <span class="chip done"><span class="dot"></span>Coordinate memory (48 runs)</span>
+      <span class="chip done"><span class="dot"></span>Paper draft complete, compiles cleanly (23 pages)</span>
     </div>
   </header>
 
@@ -178,6 +182,10 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <li><a href="#generalization">Generalization</a></li>
       <li><a href="#original">Your original study</a></li>
       <li><a href="#cnn">CNN</a></li>
+      <li><a href="#longrun">Two phases</a></li>
+      <li><a href="#teleport">Teleport</a></li>
+      <li><a href="#memory">Coordinate memory</a></li>
+      <li><a href="#bn">BatchNorm</a></li>
       <li><a href="#log">Experiment log</a></li>
       <li><a href="#fixes">What went wrong</a></li>
       <li><a href="#files">Files</a></li>
@@ -203,7 +211,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   <section class="plate" aria-labelledby="readings-h">
     <div class="plate-head"><h2 id="readings-h">Key readings</h2><span class="label">CIFAR-10 MLP unless noted</span></div>
     <div class="readings">
-      <div class="reading"><span class="label">Networks trained</span><span class="big num">416</span><p>On your laptop's CPU, in 7 experiments. The 144 main runs were each measured with 17 sharpness measures at five matched training losses.</p></div>
+      <div class="reading"><span class="label">Networks trained</span><span class="big num">588</span><p>On CPUs, in 12 experiments. The 144 main runs were each measured with 17 sharpness measures at five matched training losses.</p></div>
       <div class="reading"><span class="label">Coordinate bias</span><span class="big num">&times;2.0</span><p>The share of the Adam/SGD Hessian-trace ratio that comes from weight scaling alone: &minus;1.02 bits, 95% CI [&minus;1.16, &minus;0.87].</p></div>
       <div class="reading"><span class="label">Orbit excess</span><span class="big num"><span class="adam">1.2</span> <small>vs</small> <span class="sgd">1.8–3.4</span></span><p>How far the raw trace sits above the flattest equivalent weights, for Adam versus SGD, SGD+momentum and SAM (medians).</p></div>
       <div class="reading"><span class="label">P(Adam rated flatter)</span><span class="big num">0.64 <small>&rarr;</small> 0.01</span><p>At train loss 0.1: raw Hessian trace versus minimum sharpness, the rescaling-invariant version.</p></div>
@@ -268,7 +276,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       </figure>
       <div class="notes">
         <ul>
-          <li><b>CIFAR-10:</b> your metric, isotropic noise and the Hessian trace say Adam is flatter (P &asymp; 0.62–0.75). Minimum sharpness, filter-normalized and multiplicative noise say it is sharper (P &asymp; 0.01–0.31).</li>
+          <li><b>CIFAR-10:</b> your metric, isotropic noise and the Hessian trace say Adam is flatter (P &asymp; 0.62–0.75). Minimum sharpness and multiplicative noise say it is sharper (P &asymp; 0.01–0.31), and so does filter-normalized noise (only partially invariant, see "What went wrong").</li>
           <li><b>Why:</b> the coordinate part is &asymp; &minus;1 bit (&times;2 in Adam's favour) at every loss level, larger than the function part (+0.4 to +0.7 bits, Adam sharper).</li>
           <li><b>MNIST is subtler:</b> the coordinate part changes sign during training, so the raw ranking flips mid-training. The function part never favours Adam.</li>
           <li><b>Sanity check:</b> SAM, which is built to find flat minima, comes out clearly flatter than Adam only under invariant measures.</li>
@@ -285,7 +293,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td>Hessian trace (Gauss–Newton)</td><td>raw</td><td class="r">0.75</td><td class="r">0.64 <span class="muted">[0.44, 0.83]</span></td><td class="r">0.72</td></tr>
           <tr><td>&lambda;<sub>max</sub> (top eigenvalue)</td><td>raw</td><td class="r">0.37</td><td class="r">0.29</td><td class="r">0.45</td></tr>
           <tr><td>Minimum sharpness</td><td>invariant</td><td class="r">0.06</td><td class="r">0.01 <span class="muted">[0.00, 0.06]</span></td><td class="r">0.22</td></tr>
-          <tr><td>Filter-normalized noise</td><td>invariant</td><td class="r">0.14</td><td class="r">0.08</td><td class="r">0.06</td></tr>
+          <tr><td>Filter-normalized noise</td><td>partially invariant</td><td class="r">0.14</td><td class="r">0.08</td><td class="r">0.06</td></tr>
         </tbody>
       </table>
     </div>
@@ -371,6 +379,56 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     </div>
   </section>
 
+
+  <section id="longrun" class="plate">
+    <div class="plate-head"><h2>Two phases: a fast drift and a slow one</h2><span class="label">orbit_dynamics · 32 runs · 400–600 epochs</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig7_labelnoise.png" alt="Orbit excess over training on a log epoch axis for p=1 and p=1/2, MNIST and CIFAR-10, with and without label noise. Adam drops to about 1.1 in the first few epochs. With label noise SGD's trace excess falls slowly, and Adam's square-root excess falls while its trace excess rises.">
+        <figcaption>Orbit excess for the trace (p = 1) and for &Sigma;&radic;G<sub>ii</sub> (p = &frac12;), with and without label noise.</figcaption>
+      </figure>
+      <div class="notes">
+        <p>Theory predicts where each optimizer should drift if gradient noise keeps pushing it for long enough: SGD toward the <b>smallest trace</b> (Blanc et al., Damian et al.), Adam toward the <b>smallest &Sigma;&radic;G<sub>ii</sub></b> (Li et al. 2025). Those predictions had only been checked in toy models. On the rescaling orbit both destinations can be computed exactly, so they can be tested in a real network.</p>
+        <ul>
+          <li><b>Fast phase:</b> Adam goes from excess 3.7 to <span class="num">1.09–1.13</span> within 5 epochs on CIFAR-10. SGD is still at 1.45–1.63.</li>
+          <li><b>No noise:</b> once the data are fit, SGD's coordinates freeze.</li>
+          <li><b>Label noise, SGD:</b> its trace excess keeps falling (CIFAR-10 1.63 &rarr; 1.24 at &eta; = 0.12).</li>
+          <li><b>Label noise, Adam:</b> its &Sigma;&radic;G excess falls (CIFAR-10 1.99 &rarr; 1.64) while its trace excess <i>rises</i>.</li>
+        </ul>
+        <div class="callout good"><b>Per-run test</b>In 8 of 8 label-noise SGD runs the trace excess falls more than the &Sigma;&radic;G excess; in 8 of 8 Adam runs the opposite. Sign test p = 0.008 for each. Each optimizer drifts toward the point its own theory predicts.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="teleport" class="plate">
+    <div class="plate-head"><h2>Do Adam's coordinates help SGD?</h2><span class="pill done">negative result · 32 runs</span></div>
+    <div class="two">
+      <div class="box"><h3>The test</h3><p>Every 100 steps, move SGD (or SGD+M) to the minimum-trace point of its orbit, the coordinates Adam drifts toward. The function does not change, and the momentum buffer is transformed to match. Four learning rates per optimizer, two seeds, CIFAR-10 MLP.</p></div>
+      <div class="box"><h3>The result: it breaks training</h3><p><b>10 of 16</b> teleported runs diverged, against <b>0 of 16</b> plain runs. Each teleport raised the top Hessian eigenvalue by 3–20%, to within 5% of, or above, the stability limit 2/&eta; in 8 of 11 teleports. SGD normally stays just below that limit (edge of stability), and the teleports keep pushing it over. Adam's preferred coordinates suit Adam, not SGD.</p></div>
+    </div>
+  </section>
+
+  <!--MEMORY-->
+
+  <section id="bn" class="plate">
+    <div class="plate-head"><h2>BatchNorm and weight decay</h2><span class="label">bn_cifar10 · 24 runs · matched loss</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig8_bn.png" alt="Two scatter plots against the first-layer pre-BN weight norm. Left: raw Hessian trace falls steeply with the norm, and Adam at the small learning rate sits highest. Right: the invariant trace does not follow the norm; Adam runs are lowest.">
+        <figcaption>Training loss 0.1, one point per run. Hollow markers: with weight decay.</figcaption>
+      </figure>
+      <div class="notes">
+        <p>BatchNorm adds a second symmetry: scaling a whole row of weights before BN changes nothing. Curvature then scales like 1 / (row norm)², and that norm is set mostly by the learning rate.</p>
+        <ul>
+          <li><b>Raw measures follow the norm</b> (Spearman &minus;0.62 to &minus;0.84). Pooled, they rate Adam <i>sharper</i> than SGD (P = 0.25), but the verdict flips with the learning-rate pairing: 0/9 to 9/9.</li>
+          <li><b>Invariant measures</b> (&Sigma;w²H<sub>ii</sub>, ASAM, multiplicative) do not follow the norm. They rate Adam <i>flatter</i> in every pairing: 70/72 and 72/72 pairs.</li>
+          <li><b>Weight decay</b> at these strengths barely matters before loss 0.1 when compared at the same learning rate.</li>
+        </ul>
+        <div class="callout warn"><b>Opposite direction</b>On the plain MLP the bias favoured Adam; with BatchNorm it favours SGD. Invariant measures rate Adam sharper on the plain MLP and CNN, but flatter here. So the paper makes no general claim about which optimizer is flatter. The robust claim is that raw comparisons are biased.</div>
+      </div>
+    </div>
+  </section>
+
   <section id="log" class="plate">
     <div class="plate-head"><h2>Experiment log</h2><span class="label">everything that ran</span></div>
     <div class="tbl">
@@ -384,6 +442,11 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td><code>interv_cifar10</code>, <code>interv_mnist</code></td><td class="r">36</td><td>Adam-Q causal intervention</td><td><span class="pill done">done</span></td></tr>
           <tr><td><code>orig_replication</code></td><td class="r">20</td><td>Your exact original protocol with 5 seeds</td><td><span class="pill done">done</span></td></tr>
           <tr><td><code>cnn_cifar10</code></td><td class="r">18</td><td>Does it hold for a conv net? (rescaling per channel)</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>func_adamq</code></td><td class="r">36</td><td>Adam-Q controls: restore Q every 50 steps, one layer only, without moment transform</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>func_teleport</code></td><td class="r">32</td><td>Teleport SGD / SGD+M to the minimum-trace point every 100 steps</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>orbit_dynamics</code></td><td class="r">32</td><td>600 / 400-epoch runs with and without label noise: where each optimizer drifts</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>coordinate_memory</code></td><td class="r">48</td><td>Same initial function started at three orbit points: does the optimizer remember where it started?</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>bn_cifar10</code></td><td class="r">24</td><td>BatchNorm MLP with SGD, SGD+M, Adam, SGD+M + weight decay, AdamW</td><td><span class="pill done">done</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -412,6 +475,9 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <li>6 of 18 Adam-Q runs stalled; this is reported, not hidden.</li>
           <li>Your laptop slept from 05:15 to 10:00 and cut CNN runs short. I deleted those, reran them, and made the sweeps keep the PC awake while they run.</li>
           <li>Every number in the paper was re-checked against the raw results, and several overstated ones were corrected.</li>
+          <li><b>Filter-normalized sharpness is not fully invariant.</b> The draft called it rescaling-invariant. A test (<code>scripts/test_invariance.py</code>) shows a function-preserving neuron rescaling changes it 9.5&times;. It now counts as "partially invariant". The main conclusions do not depend on it.</li>
+          <li>The cloud machine could not reach the CIFAR-10 host, so its CIFAR runs (coordinate memory only) use a lossless PNG mirror. Same images, but a different 10k training subset; the paper says so.</li>
+          <li>My first BatchNorm weight-decay comparison pooled Adam over two learning rates and suggested a 2&times; effect. At matched learning rate the effect is small, and the paper reports that.</li>
         </ul>
       </div>
     </div>
@@ -441,8 +507,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <ol>
         <li><b>Read the paper draft</b> (<code>research/paper/main.tex</code>) and this page until you can explain every step yourself. Professors will ask about the proof and the Adam-Q test.</li>
         <li><b>Decide authorship</b>: the draft lists only you, with a comment where your supervisor, Dr. E. Sreenivasa Reddy, can be added.</li>
-        <li><b>Compile on Overleaf</b>: upload <code>paper/</code> and <code>figures/</code> keeping the folder structure (the paper loads figures from <code>../figures/</code>).</li>
-        <li><b>Put the code on GitHub</b> (e.g. under Ashvinj2004) and paste the URL into the paper's "Code and data" line. I did not publish anything for you.</li>
+        <li><b>Compile</b>: the draft compiles cleanly with pdflatex + bibtex (23 pages, no undefined references). On Overleaf, upload <code>paper/</code> and <code>figures/</code> keeping the folder structure (the paper loads figures from <code>../figures/</code>).</li>
+        <li><b>Make the GitHub repository public</b> before submitting. The paper already links to <code>github.com/Ashvinj2004/LossLandscape-Research</code>, and the repository is still private. The latest work is on branch <code>main-83mrs1</code>; merge it first.</li>
         <li><b>Submit</b>: arXiv (cs.LG; first-time submitters need an endorsement), and consider a workshop on optimization or the science of deep learning.</li>
       </ol>
     </div>
