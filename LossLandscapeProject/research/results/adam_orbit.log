@@ -7,3 +7,7 @@ adam_orbit: 12 runs to do
 [6/12] cifar10_mlp_adam_lr0.0006_bs128_s1_tele100_tomin.json reached 154s (elapsed 601s)
 [7/12] cifar10_mlp_adam_lr0.0003_bs32_s1_tele100_tomin.json reached 307s (elapsed 624s)
 [8/12] cifar10_mlp_adam_lr0.0012_bs512_s1_tele100_tomin.json reached 125s (elapsed 749s)
+[9/12] cifar10_mlp_adam_lr0.0012_bs512_s1_tele100_tobalanced.json reached 117s (elapsed 866s)
+[10/12] cifar10_mlp_adam_lr0.0003_bs32_s0_tele100_tobalanced.json max_epochs 993s (elapsed 993s)
+[11/12] cifar10_mlp_adam_lr0.0006_bs128_s1_tele100_tobalanced.json max_epochs 415s (elapsed 1015s)
+[12/12] cifar10_mlp_adam_lr0.0003_bs32_s1_tele100_tobalanced.json max_epochs 935s (elapsed 1370s)
