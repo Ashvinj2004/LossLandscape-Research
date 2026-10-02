@@ -9,6 +9,7 @@ import os
 import sys
 
 import matplotlib
+import matplotlib.ticker
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
@@ -441,6 +442,43 @@ def fig_cnn(name="fig6_cnn"):
     save(fig, name)
 
 
+# ---------------------------------------------------------------- Figure 8: BatchNorm
+def fig_bn(target=0.1, name="fig8_bn"):
+    if not glob.glob(os.path.join(RES, "bn_cifar10", "*.json")):
+        return
+    from analyze_bn import load as load_bn
+    df = load_bn()
+    df = df[df["target"] == target]
+    groups = [("sgd", "sgd", True), ("sgdm", "sgdm", True), ("adam", "adam", True),
+              ("sgdm+wd", "sgdm", False), ("adamw", "adam", False)]  # (group, colour of, filled)
+    panels = [("hess_trace", "(a) Raw Hessian trace", "tr H"),
+              ("wtrace", "(b) Invariant: Σ w² H_ii", "Σ w² H_ii")]
+    fig, axs = plt.subplots(1, 2, figsize=(6.4, 2.5))
+    for ax, (col, title, ylab) in zip(axs, panels):
+        for g, base, filled in groups:
+            d = df[df["group"] == g]
+            lab, c, mk, _ = STYLE[base]
+            ax.plot(d["prebn_row_norm_0"], d[col], ls="none", marker=mk, ms=6,
+                    color=c if filled else "white", markeredgecolor=c if not filled else "white",
+                    markeredgewidth=1.2 if not filled else 0.6,
+                    label=lab + (" + wd" if g == "sgdm+wd" else "W" if g == "adamw" else ""))
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        fmt = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
+        ax.set_xticks([1.2, 1.5, 2, 3])
+        ax.xaxis.set_major_formatter(fmt)
+        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ax.yaxis.set_major_formatter(fmt)
+        ax.yaxis.set_minor_formatter(fmt if col == "wtrace" else
+                                     matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}" if f"{v:g}"[0] in "1235" else ""))
+        ax.set_xlabel("median first-layer pre-BN row norm")
+        ax.set_ylabel(ylab)
+        ax.set_title(title, loc="left")
+    axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handletextpad=0.3)
+    fig.tight_layout(w_pad=1.5)
+    save(fig, name)
+
+
 if __name__ == "__main__":
     fig_flip(["main_cifar10_mlp", "main_mnist_mlp"])
     fig_cnn()
@@ -448,3 +486,5 @@ if __name__ == "__main__":
     fig_intervention()
     fig_replication()
     fig_generalization()
+    fig_labelnoise()
+    fig_bn()
