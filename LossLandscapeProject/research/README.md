@@ -84,6 +84,7 @@ python scripts/analyze_coordinate_memory.py --json results/coordinate_memory_sum
 python scripts/sweep.py depth_cifar10        # depth 1-8 MLPs
 python scripts/analyze_depth.py --json results/depth_cifar10_summary.json
 python scripts/sweep.py adam_orbit           # Adam held at the min-trace or min-norm orbit point
+python scripts/resnet_cifar10.py --selftest   # GPU experiment: correctness checks (then see notebooks/)
 python scripts/make_figures.py
 python scripts/fig_landscape.py               # Figure 1 ("same function, different landscape")
 python scripts/check_latex.py                 # structural check of paper/main.tex
@@ -91,6 +92,34 @@ python scripts/check_latex.py                 # structural check of paper/main.t
 
 Sweeps are resumable (finished runs are skipped). With 6 worker processes x 2 threads a main
 MLP sweep (72 runs) takes about 80 minutes on the laptop above.
+
+## ResNet-18 on full CIFAR-10 (GPU)
+
+`scripts/resnet_cifar10.py` is a self-contained GPU script, and `notebooks/resnet18_cifar10.ipynb` runs it on a
+free Kaggle or Colab GPU (instructions are inside the notebook). Two sweeps:
+
+- `resnet18_noaug`: the paper's protocol. No augmentation, constant learning rate, batch 128, loss-matched
+  checkpoints at clean training loss 1, 0.1 and 0.01. SGD (0.1), SGD+M (0.01, 0.05), Adam (1e-4, 5e-4); 3 seeds.
+- `resnet18_aug`: a standard recipe. Random crop and flip, cosine schedule over 60 epochs, with SGD+M (0.1, wd
+  5e-4), Adam (1e-3, L2 5e-4) and AdamW (1e-3, wd 0.05); 3 seeds. Checkpoints at the same losses plus the final
+  model.
+
+Every conv in ResNet-18 is followed by BatchNorm, so the measures come in three tiers:
+1. raw (tr H, λ_max, isotropic, SAM, the original metric);
+2. invariant to the BN scale symmetry: the trace at unit-norm conv filters (`ntrace`), so that
+   raw tr H = ntrace × (tr H / ntrace) exactly, plus filter-normalized sharpness;
+3. invariant to every per-weight rescaling: Σ w²H_ii, multiplicative sharpness, ASAM.
+
+All are measured with batch statistics on 1024 clean training images in chunks of 128, in float32.
+
+Checks:
+- `python scripts/resnet_cifar10.py --selftest` verifies every invariance exactly (float64, BN ε → 0), the
+  Hessian-vector product against finite differences, and Lanczos against a Rayleigh bound.
+- `scripts/test_resnet_measures.py` compares Lanczos and the three Hutchinson traces with a dense Hessian
+  (log in `results/test_resnet_measures.log`).
+
+Runs resume after an interruption with bit-identical results. Analyse returned results with
+`python scripts/analyze_resnet.py`.
 
 ## Experiment index
 
@@ -110,6 +139,7 @@ MLP sweep (72 runs) takes about 80 minutes on the laptop above.
 | `depth_cifar10` | 36 | MLPs with 1-8 hidden layers | §5.9 |
 | `bn_cifar10` | 24 | BatchNorm MLP, weight decay, AdamW | §5.10 |
 | `adam_orbit` | 12 | Adam held at the min-trace vs the min-norm orbit point | §5.3 |
+| `resnet18_noaug`, `resnet18_aug` | 15 + 9 | ResNet-18 on full CIFAR-10 (GPU; see below) | pending |
 
 Each run's JSON holds its configuration, training curve, and every measurement at every
 loss-matched checkpoint. `*_summary.json` files hold the numbers quoted in the paper.

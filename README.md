@@ -99,6 +99,11 @@ python scripts/test_invariance.py
 python scripts/make_figures.py      # all figures from the stored results (no training needed)
 ```
 
+**ResNet-18 on full CIFAR-10 (GPU):** open
+[`LossLandscapeProject/research/notebooks/resnet18_cifar10.ipynb`](LossLandscapeProject/research/notebooks/resnet18_cifar10.ipynb)
+on Kaggle (2 free T4 GPUs, about 6 h) or Google Colab and choose *Run all*. The step-by-step instructions are
+inside the notebook.
+
 Every figure and number in the paper can be regenerated from `results/` without retraining. To rerun
 an experiment, use `python scripts/sweep.py <name>`. Sweeps are resumable: a run whose result JSON
 exists is skipped. The full list of commands, and which paper section each one feeds, is in

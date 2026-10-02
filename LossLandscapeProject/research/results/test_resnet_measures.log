@@ -1,2 +1,5 @@
 2991 parameters; Hessian symmetric to 9.8e-16
 lambda_max exact 13.645479  Lanczos(30) 13.645479  rel err 1.3e-15
+hess_trace exact -453.218125  Hutchinson(400) -448.277386 +- 6.899931  (0.7 s.e.)
+wtrace     exact -9.340508  Hutchinson(400) -9.211118 +- 0.155061  (0.8 s.e.)
+ntrace     exact -138.437919  Hutchinson(400) -136.503162 +- 2.258481  (0.9 s.e.)
