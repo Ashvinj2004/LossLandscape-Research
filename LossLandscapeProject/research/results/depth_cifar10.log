@@ -1,0 +1,6 @@
+depth_cifar10: 36 runs to do
+[1/36] cifar10_mlp_d1_w128_sgdm_lr0.006_bs128_s0.json reached 46s (elapsed 47s)
+[2/36] cifar10_mlp_d1_w128_sgd_lr0.06_bs128_s0.json reached 48s (elapsed 48s)
+[3/36] cifar10_mlp_d2_w128_sgd_lr0.06_bs128_s0.json reached 45s (elapsed 93s)
+[4/36] cifar10_mlp_d1_w128_adam_lr0.0006_bs128_s0.json reached 49s (elapsed 96s)
+[5/36] cifar10_mlp_d2_w128_sgdm_lr0.006_bs128_s0.json reached 50s (elapsed 143s)

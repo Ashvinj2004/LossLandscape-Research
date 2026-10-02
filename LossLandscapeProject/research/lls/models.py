@@ -56,6 +56,16 @@ def build(arch, dataset):
     in_ch, img = (1, 28) if dataset in ("mnist", "fashion") else (3, 32)
     if arch == "mlp":
         return MLP(in_ch * img * img)
+    if arch.startswith("mlp_d"):
+        # depth sweep: "mlp_d<L>_w<W>" = L hidden layers of width W, He (Kaiming-normal) init, zero biases,
+        # so that signal variance is preserved at every depth
+        L, W = (int(t[1:]) for t in arch.split("_")[1:3])
+        m = MLP(in_ch * img * img, hidden=(W,) * L)
+        for lin in m.modules():
+            if isinstance(lin, nn.Linear):
+                nn.init.kaiming_normal_(lin.weight, nonlinearity="relu")
+                nn.init.zeros_(lin.bias)
+        return m
     if arch == "mlpbn":
         return MLPBN(in_ch * img * img)
     if arch == "cnn":
