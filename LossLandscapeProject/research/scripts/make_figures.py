@@ -103,8 +103,8 @@ def fig_flip(sweeps, target=0.1, other="sgd", name="fig1_flip"):
             color=MUTED, va="top")
     ax.set_xlim(-0.02, 1.02)
     ax.set_xlabel(f"P(Adam's minimum flatter than {STYLE[other][0]}'s)  at train loss {target}")
-    ax.text(0.97, ys[0] + 0.9, "Adam looks flatter →", ha="right", fontsize=6.2, color=INK2)
-    ax.text(0.03, ys[0] + 0.9, "← Adam looks sharper", ha="left", fontsize=6.2, color=INK2)
+    ax.text(0.98, ys[0] + 0.9, "Adam flatter →", ha="right", fontsize=6.2, color=INK2)
+    ax.text(0.02, ys[0] + 0.9, "← Adam sharper", ha="left", fontsize=6.2, color=INK2)
     ax.set_ylim(ys[-1] - 0.7, ys[0] + 1.4)
     ax.grid(axis="y", visible=False)
     ax.legend(loc="lower left", bbox_to_anchor=(1.0, -0.02), handletextpad=0.2, fontsize=6.5)
@@ -431,7 +431,7 @@ def fig_cnn(name="fig6_cnn"):
         ticklabels += [f"{t:g}".replace("0.", ".") for t in targets]
     bx.axhline(0, color="#c3c2b7", lw=0.8)
     bx.set_xticks(ticks)
-    bx.set_xticklabels(ticklabels, fontsize=6)
+    bx.set_xticklabels(ticklabels, fontsize=5.2)
     bx.set_xlabel("training loss at which the comparison is made", fontsize=7)
     bx.set_ylim(-1.4, 2.6)
     bx.set_ylabel("log₂(Adam / X) of Hessian trace\n← Adam flatter      Adam sharper →", fontsize=7)
@@ -479,6 +479,41 @@ def fig_bn(target=0.1, name="fig8_bn"):
     save(fig, name)
 
 
+# ---------------------------------------------------------------- Figure 9: coordinate memory
+def fig_memory(name="fig9_memory"):
+    files = glob.glob(os.path.join(RES, "coordinate_memory", "*.json"))
+    if not files:
+        return
+    runs = [json.load(open(f)) for f in files]
+    fig, axs = plt.subplots(1, 2, figsize=(6.6, 2.5), sharey=True)
+    ls = {1 / 3: ":", 1.0: "-", 3.0: "--"}
+    for ax, ds in zip(axs, ["mnist", "cifar10"]):
+        for opt in ["sgd", "adam"]:
+            for c, style in ls.items():
+                rr = [r for r in runs if r["cfg"]["dataset"] == ds and r["cfg"]["opt"] == opt
+                      and r["cfg"]["label_noise"] == 0 and np.isclose(r["cfg"]["c"], c)]
+                if not rr:
+                    continue
+                ep = np.array([s["epoch"] for s in rr[0]["log"]])
+                ex = np.mean([[s["excess1"] for s in r["log"]] for r in rr], axis=0)
+                lab, col, _, _ = STYLE[opt]
+                ax.plot(ep + 1, ex, ls=style, color=col, lw=1.4,
+                        label=f"{lab}, c = {'1/3' if c < 1 else f'{c:g}'}")
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_yticks([1, 1.5, 2, 3, 5, 10, 20])
+        ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.set_xlabel("epoch + 1")
+        ax.set_title(f"({'a' if ds == 'mnist' else 'b'}) {'MNIST' if ds == 'mnist' else 'CIFAR-10'} MLP, no label noise",
+                     loc="left")
+    axs[0].set_ylabel("orbit excess  tr G / MS₁")
+    axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handlelength=2.2, fontsize=6.5)
+    fig.tight_layout(w_pad=1.0)
+    save(fig, name)
+
+
 if __name__ == "__main__":
     fig_flip(["main_cifar10_mlp", "main_mnist_mlp"])
     fig_cnn()
@@ -488,3 +523,4 @@ if __name__ == "__main__":
     fig_generalization()
     fig_labelnoise()
     fig_bn()
+    fig_memory()

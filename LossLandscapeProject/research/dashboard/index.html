@@ -408,7 +408,25 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     </div>
   </section>
 
-  <!--MEMORY-->
+  <section id="memory" class="plate">
+    <div class="plate-head"><h2>Does the starting point on the orbit matter?</h2><span class="label">coordinate_memory · 48 runs</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig9_memory.png" alt="Orbit excess over training for SGD and Adam started at three rescalings of the same network, MNIST and CIFAR-10. All curves collapse within one epoch from initial values up to 30; afterwards SGD settles near 1.7 to 2.0 and Adam near 1.1 to 1.5 from every starting point.">
+        <figcaption>Same initial function, started at three points of its orbit (c = 1/3, 1, 3). No label noise; mean of two seeds.</figcaption>
+      </figure>
+      <div class="notes">
+        <p>I expected SGD to "remember" where on the orbit it started (because it conserves Q) and Adam to forget. That prediction was <b>wrong</b>, and the way it failed is useful.</p>
+        <ul>
+          <li><b>Both forget the starting excess</b> within one epoch: a 7&times; (MNIST) or 17&times; (CIFAR-10) spread shrinks to 1.3–1.9&times; and ends at 1.03–1.19&times;. Early training reshapes the curvature, and that sets the excess.</li>
+          <li><b>In weight space SGD does remember:</b> it keeps 90–99% of the separation in Q between starting points (79–83% with label noise). Adam even <i>widens</i> it, to 1.5–2.0&times; in 7 of 8 runs.</li>
+          <li><b>The Adam–SGD gap holds from every start:</b> Adam ends at 1.29–1.51 (MNIST) and 1.09–1.35 (CIFAR-10), SGD at 1.71–1.89 and 1.78–2.04. So Adam's advantage is not an accident of the default initialization.</li>
+          <li><b>The slow phase replicates:</b> with label noise, SGD moves toward minimum trace in 12/12 runs and Adam toward minimum &Sigma;&radic;G in 12/12 (p = 0.0005 each), so 20/20 per optimizer across both experiments.</li>
+        </ul>
+        <div class="callout warn"><b>Partly confirmed</b>Per neuron, Adam's drift matches the &Sigma;&radic;G balance better than the trace balance in all 24 runs. For SGD it matches the trace on MNIST (6/6) but not on CIFAR-10 (0/6), even though the whole network still moves toward minimum trace. The paper says the per-neuron mechanism for SGD is only partly confirmed.</div>
+      </div>
+    </div>
+  </section>
 
   <section id="bn" class="plate">
     <div class="plate-head"><h2>BatchNorm and weight decay</h2><span class="label">bn_cifar10 · 24 runs · matched loss</span></div>
