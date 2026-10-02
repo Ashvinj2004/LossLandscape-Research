@@ -21,6 +21,9 @@ research/
 │   ├── sweep.py             all experiment grids (calibration, main, intervention, replication, CNN)
 │   ├── drift_experiment.py  exact per-step drift decomposition (mechanism, scaling law)
 │   ├── analyze_main.py      tables: P(Adam flatter), orbit excess, imbalance
+│   ├── analyze_bn.py        BatchNorm sweep: raw vs per-weight-invariant measures, pre-BN norms
+│   ├── orbit_dynamics.py    long-horizon runs with/without label noise (two-phase picture)
+│   ├── coordinate_memory.py same function started at three orbit points (+ analyze_coordinate_memory.py)
 │   ├── gen_correlation.py   sharpness vs generalization (Kendall tau)
 │   ├── make_figures.py      all paper figures -> figures/
 │   └── test_*.py            correctness checks (diag-GGN vs brute force, rescaling invariances)
@@ -51,6 +54,7 @@ from the `research/` folder with that environment's Python.
 ```bash
 python scripts/test_ggn.py             # diag-GGN matches brute force
 python scripts/test_rescale.py         # function preserved, transport exact, orbit-min is a minimum
+python scripts/test_invariance.py      # which perturbation measures are invariant to which rescalings
 python scripts/sweep.py calib_cifar10  # learning-rate calibration (training only)
 python scripts/sweep.py main_cifar10_mlp
 python scripts/sweep.py main_mnist_mlp
@@ -64,6 +68,13 @@ python scripts/analyze_main.py main_cifar10_mlp main_mnist_mlp
 python scripts/analyze_intervention.py main_cifar10_mlp interv_cifar10 main_mnist_mlp interv_mnist
 python scripts/bootstrap_ci.py main_cifar10_mlp main_mnist_mlp
 python scripts/gen_correlation.py main_cifar10_mlp main_mnist_mlp
+python scripts/sweep.py func_adamq           # Adam-Q controls
+python scripts/sweep.py func_teleport        # symmetry teleportation of SGD / SGD+M
+python scripts/sweep.py bn_cifar10           # BatchNorm MLP + weight decay
+python scripts/analyze_bn.py --json results/bn_cifar10_summary.json
+python scripts/orbit_dynamics.py
+python scripts/coordinate_memory.py
+python scripts/analyze_coordinate_memory.py --json results/coordinate_memory_summary.json
 python scripts/make_figures.py
 python scripts/fig_landscape.py               # Figure 1 ("same function, different landscape")
 python scripts/check_latex.py                 # structural check of paper/main.tex
