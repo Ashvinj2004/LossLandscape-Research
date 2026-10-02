@@ -4,15 +4,16 @@ Research code for the paper in [`paper/main.tex`](paper/main.tex): Adam drifts a
 rescaling symmetries of ReLU networks, SGD does not, and this biases flatness comparisons
 between optimizers.
 
-Everything runs on a CPU (developed on an i7-13620H laptop, no GPU).
+Everything runs on a CPU. Most experiments ran on an i7-13620H laptop; the coordinate-memory, depth
+and Adam-teleport experiments ran on a 4-core cloud machine. No GPU is needed.
 
 ## Layout
 
 ```
 research/
 ├── lls/                     library
-│   ├── data.py              MNIST / CIFAR-10 from the local Keras cache, subsets, standardization
-│   ├── models.py            MLP (in-128-64-10) and a small CNN (no normalization layers)
+│   ├── data.py              MNIST / CIFAR-10 from research/data/, subsets, standardization
+│   ├── models.py            MLP (in-128-64-10), depth-sweep MLPs, BatchNorm MLP, small CNN
 │   ├── train.py             training with loss-matched checkpoints; SGD, SGD+M, SAM, Adam, Adam-Q
 │   ├── measures.py          17 sharpness measures, exact diagonal Gauss-Newton, Lanczos, PGD
 │   ├── rescale.py           rescaling orbits: balancing, minimum sharpness, drift removal (Adam-Q)
@@ -24,12 +25,13 @@ research/
 │   ├── analyze_bn.py        BatchNorm sweep: raw vs per-weight-invariant measures, pre-BN norms
 │   ├── orbit_dynamics.py    long-horizon runs with/without label noise (two-phase picture)
 │   ├── coordinate_memory.py same function started at three orbit points (+ analyze_coordinate_memory.py)
+│   ├── analyze_depth.py     depth sweep: function / coordinate split per depth
 │   ├── gen_correlation.py   sharpness vs generalization (Kendall tau)
 │   ├── make_figures.py      all paper figures -> figures/
 │   └── test_*.py            correctness checks (diag-GGN vs brute force, rescaling invariances)
 ├── results/                 one JSON per run (config, training history, checkpoints, measures)
 ├── figures/                 paper figures (PDF + PNG)
-├── paper/                   LaTeX source (compile on Overleaf: main.tex + refs.bib + ../figures)
+├── paper/                   main.tex, refs.bib, compiled main.pdf (figures load from ../figures)
 ├── dashboard/               source of the project dashboard page
 ├── data/                    raw datasets: mnist.npz, cifar-10-batches-py/   (not for git: large)
 ├── .cache/                  preprocessed tensors, rebuilt automatically      (not for git)
@@ -39,17 +41,21 @@ research/
 
 ## Reproduce
 
-The Python environment lives in `C:\Projects\Loss Landscape Research\.venv`. To rebuild it:
-
 ```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-.venv/Scripts/python -m pip install numpy scipy matplotlib pandas
+python -m venv .venv && . .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install torch --index-url https://download.pytorch.org/whl/cpu   # or plain `pip install torch`
+pip install -r requirements.txt
+python scripts/get_data.py
 ```
 
-Datasets are read from `research/data/` (copies of the files the original TensorFlow scripts
-downloaded); the Keras cache `~/.keras/datasets` is used as a fallback. Run the commands below
-from the `research/` folder with that environment's Python.
+`get_data.py` downloads MNIST and CIFAR-10 into `research/data/` and verifies their MD5 checksums.
+If the CIFAR-10 host is unreachable, it rebuilds the dataset from fast.ai's lossless PNG copy. That
+copy has a different order, so it gives a different 10k training subset, and it is marked by a
+`REORDERED` file. The Keras cache `~/.keras/datasets` is used as a fallback. Run the commands below
+from the `research/` folder.
+
+Every figure and table can be regenerated from the stored JSONs without retraining:
+`python scripts/make_figures.py` and the `analyze_*.py` scripts. The full pipeline:
 
 ```bash
 python scripts/test_ggn.py             # diag-GGN matches brute force
@@ -75,6 +81,9 @@ python scripts/analyze_bn.py --json results/bn_cifar10_summary.json
 python scripts/orbit_dynamics.py
 python scripts/coordinate_memory.py
 python scripts/analyze_coordinate_memory.py --json results/coordinate_memory_summary.json
+python scripts/sweep.py depth_cifar10        # depth 1-8 MLPs
+python scripts/analyze_depth.py --json results/depth_cifar10_summary.json
+python scripts/sweep.py adam_orbit           # Adam held at the min-trace or min-norm orbit point
 python scripts/make_figures.py
 python scripts/fig_landscape.py               # Figure 1 ("same function, different landscape")
 python scripts/check_latex.py                 # structural check of paper/main.tex
@@ -82,6 +91,28 @@ python scripts/check_latex.py                 # structural check of paper/main.t
 
 Sweeps are resumable (finished runs are skipped). With 6 worker processes x 2 threads a main
 MLP sweep (72 runs) takes about 80 minutes on the laptop above.
+
+## Experiment index
+
+| results/ folder | runs | what it tests | paper |
+|---|---:|---|---|
+| `pilot_cifar` | 12 | first look; edge-of-stability observation | App. E |
+| `calib_cifar10`, `calib_mnist` | 96 | learning-rate calibration (training only) | App. D |
+| `main_cifar10_mlp`, `main_mnist_mlp` | 144 | loss-matched audit: SGD, SGD+M, SAM, Adam, 17 measures | §5.2, §5.6 |
+| `drift` | 90 | exact per-step drift decomposition, scaling law, RMSprop, signSGD | §5.1, App. B |
+| `interv_cifar10`, `interv_mnist` | 36 | Adam-Q causal intervention | §5.3 |
+| `func_adamq` | 36 | Adam-Q controls (every 50 steps, one layer, no moment transform) | §5.3 |
+| `func_teleport` | 32 | teleporting SGD / SGD+M to the minimum-trace point | §5.4 |
+| `orbit_dynamics` | 32 | 400-600 epochs with / without label noise | §5.5 |
+| `coordinate_memory` | 48 | same function started at three orbit points | §5.5 |
+| `orig_replication` | 20 | the original study's protocol, 5 seeds | §5.7 |
+| `cnn_cifar10` | 18 | CNN audit (channel rescaling) | §5.8 |
+| `depth_cifar10` | 36 | MLPs with 1-8 hidden layers | §5.9 |
+| `bn_cifar10` | 24 | BatchNorm MLP, weight decay, AdamW | §5.10 |
+| `adam_orbit` | 12 | Adam held at the min-trace vs the min-norm orbit point | §5.3 |
+
+Each run's JSON holds its configuration, training curve, and every measurement at every
+loss-matched checkpoint. `*_summary.json` files hold the numbers quoted in the paper.
 
 ## Correctness checks that were run
 
@@ -94,3 +125,5 @@ MLP sweep (72 runs) takes about 80 minutes on the laptop above.
 | orbit-min trace vs raw, min-norm and random rescalings | always the smallest |
 | per-step drift decomposition closes (Eq. 1 of the paper) | max error 1.3e-6 |
 | SGD first-order drift (must be exactly 0) | < 3e-7 (float32 round-off) |
+| multiplicative, ASAM, Σ w²H_ii under random neuron / BN rescalings (`test_invariance.py`) | unchanged (< 2e-4 relative) |
+| filter-normalized sharpness under the same rescalings | changes ×9.5 (neuron), ×19 (BN affine): only row-scale invariant |

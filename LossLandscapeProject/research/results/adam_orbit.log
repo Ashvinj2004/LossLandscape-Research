@@ -1,0 +1,2 @@
+adam_orbit: 12 runs to do
+[1/12] cifar10_mlp_adam_lr0.0006_bs128_s0_tele100_tomin.json reached 169s (elapsed 169s)

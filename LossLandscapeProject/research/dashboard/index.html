@@ -166,6 +166,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <span class="chip done"><span class="dot"></span>Teleport test: negative result (32 runs)</span>
       <span class="chip done"><span class="dot"></span>BatchNorm + weight decay (24 runs)</span>
       <span class="chip done"><span class="dot"></span>Coordinate memory (48 runs)</span>
+      <span class="chip done"><span class="dot"></span>Depth 1–8 layers (36 runs)</span>
       <span class="chip done"><span class="dot"></span>Paper draft complete, compiles cleanly (23 pages)</span>
     </div>
   </header>
@@ -185,6 +186,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <li><a href="#longrun">Two phases</a></li>
       <li><a href="#teleport">Teleport</a></li>
       <li><a href="#memory">Coordinate memory</a></li>
+      <li><a href="#depth">Depth</a></li>
       <li><a href="#bn">BatchNorm</a></li>
       <li><a href="#log">Experiment log</a></li>
       <li><a href="#fixes">What went wrong</a></li>
@@ -211,7 +213,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   <section class="plate" aria-labelledby="readings-h">
     <div class="plate-head"><h2 id="readings-h">Key readings</h2><span class="label">CIFAR-10 MLP unless noted</span></div>
     <div class="readings">
-      <div class="reading"><span class="label">Networks trained</span><span class="big num">588</span><p>On CPUs, in 12 experiments. The 144 main runs were each measured with 17 sharpness measures at five matched training losses.</p></div>
+      <div class="reading"><span class="label">Networks trained</span><span class="big num">624</span><p>On CPUs, in 13 experiments. The 144 main runs were each measured with 17 sharpness measures at five matched training losses.</p></div>
       <div class="reading"><span class="label">Coordinate bias</span><span class="big num">&times;2.0</span><p>The share of the Adam/SGD Hessian-trace ratio that comes from weight scaling alone: &minus;1.02 bits, 95% CI [&minus;1.16, &minus;0.87].</p></div>
       <div class="reading"><span class="label">Orbit excess</span><span class="big num"><span class="adam">1.2</span> <small>vs</small> <span class="sgd">1.8–3.4</span></span><p>How far the raw trace sits above the flattest equivalent weights, for Adam versus SGD, SGD+momentum and SAM (medians).</p></div>
       <div class="reading"><span class="label">P(Adam rated flatter)</span><span class="big num">0.64 <small>&rarr;</small> 0.01</span><p>At train loss 0.1: raw Hessian trace versus minimum sharpness, the rescaling-invariant version.</p></div>
@@ -428,6 +430,25 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     </div>
   </section>
 
+  <section id="depth" class="plate">
+    <div class="plate-head"><h2>Does the bias grow with depth?</h2><span class="label">depth_cifar10 · 36 runs</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig10_depth.png" alt="Line charts against depth 1, 2, 4, 8 hidden layers. The coordinate term stays near minus 0.5 to minus 0.9 bits at every depth; the function term rises from about 0.3 to 0.9 bits against SGD; the raw trace crosses from negative to positive.">
+        <figcaption>The exact function &times; coordinates split of the Adam / X trace ratio, CIFAR-10 MLPs with 1–8 hidden layers of width 128.</figcaption>
+      </figure>
+      <div class="notes">
+        <p>I expected the bias to grow with depth, since every layer adds its own rescaling symmetry. It does <b>not</b>.</p>
+        <ul>
+          <li><b>Coordinate part:</b> about the same at every depth, &minus;0.48 to &minus;0.74 bits against SGD (Adam looks 1.4–1.7&times; flatter than it is).</li>
+          <li><b>Function part:</b> grows with depth. Against SGD, Adam's real sharpness rises from +0.26–0.37 bits (1 layer) to +0.76–0.89 bits (8 layers).</li>
+          <li><b>Result:</b> at 1–2 layers the raw trace says Adam is flatter in every pair while the invariant measure says sharper in every pair: a reversal. At 8 layers the bias hides most of the real gap instead.</li>
+        </ul>
+        <div class="callout good"><b>Why this matters for reviewers</b>It answers "your networks are too small": the bias keeps the same size in deeper networks. Whether it reverses or hides the ranking depends on how large the real difference is.</div>
+      </div>
+    </div>
+  </section>
+
   <section id="bn" class="plate">
     <div class="plate-head"><h2>BatchNorm and weight decay</h2><span class="label">bn_cifar10 · 24 runs · matched loss</span></div>
     <div class="plate-body">
@@ -464,6 +485,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td><code>func_teleport</code></td><td class="r">32</td><td>Teleport SGD / SGD+M to the minimum-trace point every 100 steps</td><td><span class="pill done">done</span></td></tr>
           <tr><td><code>orbit_dynamics</code></td><td class="r">32</td><td>600 / 400-epoch runs with and without label noise: where each optimizer drifts</td><td><span class="pill done">done</span></td></tr>
           <tr><td><code>coordinate_memory</code></td><td class="r">48</td><td>Same initial function started at three orbit points: does the optimizer remember where it started?</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>depth_cifar10</code></td><td class="r">36</td><td>MLPs with 1, 2, 4 and 8 hidden layers: does the bias grow with depth?</td><td><span class="pill done">done</span></td></tr>
           <tr><td><code>bn_cifar10</code></td><td class="r">24</td><td>BatchNorm MLP with SGD, SGD+M, Adam, SGD+M + weight decay, AdamW</td><td><span class="pill done">done</span></td></tr>
         </tbody>
       </table>
