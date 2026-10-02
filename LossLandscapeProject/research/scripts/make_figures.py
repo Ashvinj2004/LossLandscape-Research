@@ -9,6 +9,7 @@ import os
 import sys
 
 import matplotlib
+import matplotlib.ticker
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
@@ -68,9 +69,9 @@ FLIP_MEASURES = [  # (display, column, family)
     ("λ_max", "lambda_max", "raw"),
     ("Minimum sharpness (min. trace over orbit)", "orbitmin_trace", "inv"),
     ("Orbit-min Σ √diag G", "orbitmin_sqrt_trace", "inv"),
-    ("Filter-normalized avg. sharpness", "avg_filter_0.03", "inv"),
     ("Multiplicative avg. sharpness", "avg_mult_0.03", "inv"),
     ("Σ w² G_ii", "ggn_trace_wscaled", "inv"),
+    ("Filter-normalized avg. (row scaling only)", "avg_filter_0.03", "inv"),
 ]
 
 
@@ -102,8 +103,8 @@ def fig_flip(sweeps, target=0.1, other="sgd", name="fig1_flip"):
             color=MUTED, va="top")
     ax.set_xlim(-0.02, 1.02)
     ax.set_xlabel(f"P(Adam's minimum flatter than {STYLE[other][0]}'s)  at train loss {target}")
-    ax.text(0.97, ys[0] + 0.9, "Adam looks flatter →", ha="right", fontsize=6.2, color=INK2)
-    ax.text(0.03, ys[0] + 0.9, "← Adam looks sharper", ha="left", fontsize=6.2, color=INK2)
+    ax.text(0.98, ys[0] + 0.9, "Adam flatter →", ha="right", fontsize=6.2, color=INK2)
+    ax.text(0.02, ys[0] + 0.9, "← Adam sharper", ha="left", fontsize=6.2, color=INK2)
     ax.set_ylim(ys[-1] - 0.7, ys[0] + 1.4)
     ax.grid(axis="y", visible=False)
     ax.legend(loc="lower left", bbox_to_anchor=(1.0, -0.02), handletextpad=0.2, fontsize=6.5)
@@ -238,8 +239,8 @@ def fig_intervention(pairs=(("main_cifar10_mlp", "interv_cifar10"), ("main_mnist
     cols = [("Orbit excess  tr G / MS₁", "excess", "coord"), ("Hessian trace", "hess_trace", "raw"),
             ("Isotropic avg.", "avg_iso_0.01", "raw"), ("Original metric", "orig_rel_sharp_test", "raw"),
             ("λ_max", "lambda_max", "raw"), ("Minimum sharpness", "orbitmin_trace", "inv"),
-            ("Filter-norm. avg.", "avg_filter_0.1", "inv"), ("Multiplicative avg.", "avg_mult_0.1", "inv"),
-            ("Σ w² G_ii", "ggn_trace_wscaled", "inv")]
+            ("Multiplicative avg.", "avg_mult_0.1", "inv"), ("Σ w² G_ii", "ggn_trace_wscaled", "inv"),
+            ("Filter-norm. avg. (row only)", "avg_filter_0.1", "inv")]
     have = []
     for main, interv in pairs:
         dm, di = sweep_df(main), sweep_df(interv)
@@ -430,7 +431,7 @@ def fig_cnn(name="fig6_cnn"):
         ticklabels += [f"{t:g}".replace("0.", ".") for t in targets]
     bx.axhline(0, color="#c3c2b7", lw=0.8)
     bx.set_xticks(ticks)
-    bx.set_xticklabels(ticklabels, fontsize=6)
+    bx.set_xticklabels(ticklabels, fontsize=5.2)
     bx.set_xlabel("training loss at which the comparison is made", fontsize=7)
     bx.set_ylim(-1.4, 2.6)
     bx.set_ylabel("log₂(Adam / X) of Hessian trace\n← Adam flatter      Adam sharper →", fontsize=7)
@@ -441,6 +442,110 @@ def fig_cnn(name="fig6_cnn"):
     save(fig, name)
 
 
+# ---------------------------------------------------------------- Figure 8: BatchNorm
+def fig_bn(target=0.1, name="fig8_bn"):
+    if not glob.glob(os.path.join(RES, "bn_cifar10", "*.json")):
+        return
+    from analyze_bn import load as load_bn
+    df = load_bn()
+    df = df[df["target"] == target]
+    groups = [("sgd", "sgd", True), ("sgdm", "sgdm", True), ("adam", "adam", True),
+              ("sgdm+wd", "sgdm", False), ("adamw", "adam", False)]  # (group, colour of, filled)
+    panels = [("hess_trace", "(a) Raw Hessian trace", "tr H"),
+              ("wtrace", "(b) Invariant: Σ w² H_ii", "Σ w² H_ii")]
+    fig, axs = plt.subplots(1, 2, figsize=(6.4, 2.5))
+    for ax, (col, title, ylab) in zip(axs, panels):
+        for g, base, filled in groups:
+            d = df[df["group"] == g]
+            lab, c, mk, _ = STYLE[base]
+            ax.plot(d["prebn_row_norm_0"], d[col], ls="none", marker=mk, ms=6,
+                    color=c if filled else "white", markeredgecolor=c if not filled else "white",
+                    markeredgewidth=1.2 if not filled else 0.6,
+                    label=lab + (" + wd" if g == "sgdm+wd" else "W" if g == "adamw" else ""))
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        fmt = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
+        ax.set_xticks([1.2, 1.5, 2, 3])
+        ax.xaxis.set_major_formatter(fmt)
+        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ax.yaxis.set_major_formatter(fmt)
+        ax.yaxis.set_minor_formatter(fmt if col == "wtrace" else
+                                     matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}" if f"{v:g}"[0] in "1235" else ""))
+        ax.set_xlabel("median first-layer pre-BN row norm")
+        ax.set_ylabel(ylab)
+        ax.set_title(title, loc="left")
+    axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handletextpad=0.3)
+    fig.tight_layout(w_pad=1.5)
+    save(fig, name)
+
+
+# ---------------------------------------------------------------- Figure 9: coordinate memory
+def fig_memory(name="fig9_memory"):
+    files = glob.glob(os.path.join(RES, "coordinate_memory", "*.json"))
+    if not files:
+        return
+    runs = [json.load(open(f)) for f in files]
+    fig, axs = plt.subplots(1, 2, figsize=(6.6, 2.5), sharey=True)
+    ls = {1 / 3: ":", 1.0: "-", 3.0: "--"}
+    for ax, ds in zip(axs, ["mnist", "cifar10"]):
+        for opt in ["sgd", "adam"]:
+            for c, style in ls.items():
+                rr = [r for r in runs if r["cfg"]["dataset"] == ds and r["cfg"]["opt"] == opt
+                      and r["cfg"]["label_noise"] == 0 and np.isclose(r["cfg"]["c"], c)]
+                if not rr:
+                    continue
+                ep = np.array([s["epoch"] for s in rr[0]["log"]])
+                ex = np.mean([[s["excess1"] for s in r["log"]] for r in rr], axis=0)
+                lab, col, _, _ = STYLE[opt]
+                ax.plot(ep + 1, ex, ls=style, color=col, lw=1.4,
+                        label=f"{lab}, c = {'1/3' if c < 1 else f'{c:g}'}")
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_yticks([1, 1.5, 2, 3, 5, 10, 20])
+        ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.set_xlabel("epoch + 1")
+        ax.set_title(f"({'a' if ds == 'mnist' else 'b'}) {'MNIST' if ds == 'mnist' else 'CIFAR-10'} MLP, no label noise",
+                     loc="left")
+    axs[0].set_ylabel("orbit excess  tr G / MS₁")
+    axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handlelength=2.2, fontsize=6.5)
+    fig.tight_layout(w_pad=1.0)
+    save(fig, name)
+
+
+# ---------------------------------------------------------------- Figure 10: depth
+def fig_depth(name="fig10_depth"):
+    if not glob.glob(os.path.join(RES, "depth_cifar10", "*.json")):
+        return
+    df = sweep_df("depth_cifar10")
+    df = df.assign(depth=df["arch"].str.extract(r"mlp_d(\d+)_")[0].astype(int),
+                   l_fun=np.log2(df["orbitmin_trace"]), l_coord=np.log2(df["ggn_trace"] / df["orbitmin_trace"]))
+    depths = sorted(df["depth"].unique())
+    fig, axs = plt.subplots(1, 2, figsize=(6.4, 2.4), sharey=True)
+    for ax, other in zip(axs, ["sgd", "sgdm"]):
+        for tgt, mk in [(0.3, "o"), (0.1, "s")]:
+            fun, coord = [], []
+            for dd in depths:
+                g = df[(df.depth == dd) & (df.target == tgt)]
+                A, B = g[g.opt == "adam"], g[g.opt == other]
+                fun.append(A.l_fun.mean() - B.l_fun.mean())
+                coord.append(A.l_coord.mean() - B.l_coord.mean())
+            ax.plot(depths, fun, marker=mk, color="#1c5cab", label=f"function, loss {tgt:g}")
+            ax.plot(depths, coord, marker=mk, color="#86b6ef", ls="--", label=f"coordinates, loss {tgt:g}")
+            ax.plot(depths, np.add(fun, coord), marker=mk, color=INK, lw=0.9, ls=":", label=f"raw trace, loss {tgt:g}")
+        ax.axhline(0, color="#c3c2b7", lw=0.8)
+        ax.set_xscale("log", base=2)
+        ax.set_xticks(depths)
+        ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.set_xlabel("hidden layers (width 128)")
+        ax.set_title(f"({'a' if other == 'sgd' else 'b'}) Adam vs {STYLE[other][0]}", loc="left")
+    axs[0].set_ylabel("log₂(Adam / X) of tr G\n← Adam flatter   Adam sharper →", fontsize=7)
+    axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=6.3)
+    fig.tight_layout(w_pad=1.0)
+    save(fig, name)
+
+
 if __name__ == "__main__":
     fig_flip(["main_cifar10_mlp", "main_mnist_mlp"])
     fig_cnn()
@@ -448,3 +553,7 @@ if __name__ == "__main__":
     fig_intervention()
     fig_replication()
     fig_generalization()
+    fig_labelnoise()
+    fig_bn()
+    fig_memory()
+    fig_depth()

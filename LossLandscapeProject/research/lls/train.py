@@ -140,8 +140,11 @@ def run(cfg, verbose=False):
                                         layers=cfg.get("q_layers"))
             if cfg.get("teleport_every") and (step + 1) % cfg["teleport_every"] == 0:
                 # jump to the minimum-sharpness point of the current orbit (function-preserving)
-                dg_t = M.diag_ggn_linear(model, tele_x)
-                _, sc_t = R.orbit_min_trace(model, dg_t, p=cfg.get("teleport_p", 1.0))
+                if cfg.get("teleport_to", "min") == "balanced":  # minimum-norm point of the orbit
+                    _, sc_t = R.balance_min_norm(model)
+                else:  # minimum of sum_i diag(G)_ii^p over the orbit
+                    dg_t = M.diag_ggn_linear(model, tele_x)
+                    _, sc_t = R.orbit_min_trace(model, dg_t, p=cfg.get("teleport_p", 1.0))
                 R.scale_units_inplace(model, sc_t, opt)
             step += 1
         model.eval()
@@ -203,7 +206,7 @@ def run(cfg, verbose=False):
 def run_name(cfg):
     extra = "_raw" if cfg.get("standardize", True) is False else ""
     extra += "_full" if cfg.get("n_train", 10000) is None else ""
-    for k, tag in (("wd", "wd"), ("q_every", "qe"), ("q_transform", "qt"), ("q_layers", "ql"), ("teleport_every", "tele")):
+    for k, tag in (("wd", "wd"), ("q_every", "qe"), ("q_transform", "qt"), ("q_layers", "ql"), ("teleport_every", "tele"), ("teleport_to", "to")):
         if k in cfg:
             v = cfg[k]
             extra += f"_{tag}{'-'.join(map(str, v)) if isinstance(v, list) else int(v) if isinstance(v, bool) else v}"
