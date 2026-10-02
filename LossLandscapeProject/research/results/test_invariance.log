@@ -1,0 +1,21 @@
+
+MLP, ReLU neuron rescaling (layer 1)  (loss 0.306679 -> 0.306679)
+  iso     0.141025 -> 1.20095   CHANGES (x8.52)
+  filter  0.00176708 -> 0.0168577   CHANGES (x9.54)
+  mult    0.00303013 -> 0.00303014   invariant
+  asam    0.079453 -> 0.0794531   invariant
+  wtrace  0.989615 -> 0.989615   invariant
+
+BN-MLP, pre-BN row scaling (layer 1)  (loss 0.151836 -> 0.151830)
+  iso     0.52253 -> 0.474609   CHANGES (x0.908)
+  filter  0.00035827 -> 0.000358464   invariant
+  mult    4.56888e-05 -> 4.56963e-05   invariant
+  asam    0.0216137 -> 0.0216136   invariant
+  wtrace  1.1893 -> 1.18935   invariant
+
+BN-MLP, ReLU rescaling of BN affine vs next layer (layer 1)  (loss 0.151830 -> 0.151830)
+  iso     0.474609 -> 0.883105   CHANGES (x1.86)
+  filter  0.000358464 -> 0.00677726   CHANGES (x18.9)
+  mult    4.56963e-05 -> 4.56981e-05   invariant
+  asam    0.0216136 -> 0.0216136   invariant
+  wtrace  1.18935 -> 1.18935   invariant

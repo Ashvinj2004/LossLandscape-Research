@@ -68,9 +68,9 @@ FLIP_MEASURES = [  # (display, column, family)
     ("λ_max", "lambda_max", "raw"),
     ("Minimum sharpness (min. trace over orbit)", "orbitmin_trace", "inv"),
     ("Orbit-min Σ √diag G", "orbitmin_sqrt_trace", "inv"),
-    ("Filter-normalized avg. sharpness", "avg_filter_0.03", "inv"),
     ("Multiplicative avg. sharpness", "avg_mult_0.03", "inv"),
     ("Σ w² G_ii", "ggn_trace_wscaled", "inv"),
+    ("Filter-normalized avg. (row scaling only)", "avg_filter_0.03", "inv"),
 ]
 
 
@@ -238,8 +238,8 @@ def fig_intervention(pairs=(("main_cifar10_mlp", "interv_cifar10"), ("main_mnist
     cols = [("Orbit excess  tr G / MS₁", "excess", "coord"), ("Hessian trace", "hess_trace", "raw"),
             ("Isotropic avg.", "avg_iso_0.01", "raw"), ("Original metric", "orig_rel_sharp_test", "raw"),
             ("λ_max", "lambda_max", "raw"), ("Minimum sharpness", "orbitmin_trace", "inv"),
-            ("Filter-norm. avg.", "avg_filter_0.1", "inv"), ("Multiplicative avg.", "avg_mult_0.1", "inv"),
-            ("Σ w² G_ii", "ggn_trace_wscaled", "inv")]
+            ("Multiplicative avg.", "avg_mult_0.1", "inv"), ("Σ w² G_ii", "ggn_trace_wscaled", "inv"),
+            ("Filter-norm. avg. (row only)", "avg_filter_0.1", "inv")]
     have = []
     for main, interv in pairs:
         dm, di = sweep_df(main), sweep_df(interv)
