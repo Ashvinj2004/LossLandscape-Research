@@ -50,7 +50,8 @@ def load(results, sweep):
             row = {k: c[k] for k in ("opt", "lr", "wd", "seed")}
             row.update({"run": os.path.basename(p)[:-5], "status": r["status"],
                         "target": ck["target"] if ck["target"] is not None else "final"})
-            row.update({k: v for k, v in ck.items() if not isinstance(v, (list, dict)) and k != "target"})
+            row.update({k: v for k, v in ck.items()
+                        if not isinstance(v, (list, dict)) and k not in row and k not in ("target", "lr")})
             rows.append(row)
     df = pd.DataFrame(rows)
     if len(df):
@@ -92,7 +93,7 @@ def main():
         print("\nRuns per configuration and target:")
         print(df.pivot_table(index="config", columns="target", values="run", aggfunc="nunique"))
         cols = ["epoch", "train_loss", "test_acc", "conv_filter_norm_gmean", "hess_trace", "ntrace", "norm_factor",
-                "wtrace", "lambda_max", "lambda_max_conv", "avg_iso_0.001", "avg_filter_0.03", "avg_mult_0.03",
+                "wtrace", "lambda_max", "lambda_max_drift", "avg_iso_0.001", "avg_filter_0.03", "avg_mult_0.03",
                 "worst_sam_0.05", "worst_asam_0.5", "orig_rel_sharp_test", "rel_iso_test_0.001"]
         res["median"] = {}
         for col in [c for c in cols if c in df]:

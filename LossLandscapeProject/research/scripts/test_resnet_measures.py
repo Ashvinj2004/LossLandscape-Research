@@ -2,7 +2,7 @@
 
 The dense Hessian is assembled column by column from Hessian-vector products in batch-statistics mode,
 then compared with: Lanczos lambda_max (30 steps), and the Hutchinson estimates of tr H, sum w^2 H_ii and
-the BN-normalized trace (2000 probes; their errors should match the reported standard errors).
+the BN-normalized trace (400 probes by default; their errors should match the reported standard errors).
 
 usage: python scripts/test_resnet_measures.py
 """
@@ -44,10 +44,11 @@ def main():
         d = R.conv_filter_weights(m).double()
         exact = {"hess_trace": float(H.diagonal().sum()), "wtrace": float((w * w * H.diagonal()).sum()),
                  "ntrace": float((d * H.diagonal()).sum())}
-        est = R.quad_traces(m, X, Y, 16, 2000, 0, {"hess_trace": None, "wtrace": w * w, "ntrace": d})
+        n_probes = int(os.environ.get("N_PROBES", 400))
+        est = R.quad_traces(m, X, Y, 16, n_probes, 0, {"hess_trace": None, "wtrace": w * w, "ntrace": d})
         for k in exact:
             mu, se = est[k]
-            print(f"{k:10s} exact {exact[k]:.6f}  Hutchinson(2000) {mu:.6f} +- {se:.6f}  "
+            print(f"{k:10s} exact {exact[k]:.6f}  Hutchinson({n_probes}) {mu:.6f} +- {se:.6f}  "
                   f"({abs(mu - exact[k]) / se:.1f} s.e.)")
 
 

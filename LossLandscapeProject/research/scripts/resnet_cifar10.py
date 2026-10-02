@@ -393,7 +393,7 @@ def measure_all(model, data, w_init, args):
                          scales={"hess_trace": None, "wtrace": w * w, "ntrace": d})
         for k, (m, se) in tr.items():
             r[k], r[k + "_se"] = m, se
-        r["lambda_max"], r["lambda_max_conv"] = lambda_max(model, X, Y, chunk)
+        r["lambda_max"], r["lambda_max_drift"] = lambda_max(model, X, Y, chunk)
         for kind, sig in SIGMAS.items():
             for s, (m, se) in average_sharpness(model, X, Y, chunk, kind, sig, args.n_draws, 0, L0).items():
                 r[f"avg_{kind}_{s}"], r[f"avg_{kind}_{s}_se"] = m, se
@@ -505,7 +505,7 @@ def train_run(cfg, data, args, out_dir, deadline):
         model.eval()
         meas = measure_all(model, data, w_init, args)
         ck = {"target": target, "targets_crossed": crossed, "epoch": st["epoch"], "step": st["step"],
-              "lr": opt.param_groups[0]["lr"], "train_loss": tr[0], "train_acc": tr[1],
+              "lr_now": opt.param_groups[0]["lr"], "train_loss": tr[0], "train_acc": tr[1],
               "test_loss": te[0], "test_acc": te[1], **meas}
         st["ckpts"].append(ck)
         print(f"  ckpt {name} target={target} ep {st['epoch']} trH {meas['hess_trace']:.1f} "
@@ -527,10 +527,12 @@ def train_run(cfg, data, args, out_dir, deadline):
         return (tot / data.n, corr / data.n), loss_acc(model, data.norm(data.xte), data.yte, 1000, amp=amp)
 
     status = "max_epochs"
+    epochs_here = 0
     while st["epoch"] < cfg["max_epochs"]:
-        if time.time() > deadline:
+        if time.time() > deadline or (args.stop_after_epochs and epochs_here >= args.stop_after_epochs):
             save_state()
             return "stopped"
+        epochs_here += 1
         t0 = time.time()
         model.train()
         perm = torch.randperm(data.n, generator=gen).to(dev)
@@ -620,8 +622,16 @@ def selftest(args, dev):
     """Correctness checks on the target device, then (optionally) a timing estimate for the sweeps."""
     ok = True
     torch.manual_seed(0)
-    model = ResNet18(width=args.width_test).to(dev)
-    X = torch.randn(64, 3, 32, 32, device=dev)
+    # The invariance checks test the code, so they run in float64 and with BatchNorm's epsilon -> 0, where
+    # every invariance is exact. (With the default epsilon = 1e-5 the BN scale symmetry is approximate: the
+    # loss moves by ~1e-6 and gradients by up to a few percent under large filter rescalings; and in float32
+    # the 10-step PGD of ASAM / SAM is reproducible to ~1%, as rounding flips a few ReLUs along its path.
+    # The experiment itself keeps PyTorch's defaults: float32, epsilon = 1e-5.)
+    model = ResNet18(width=args.width_test).to(dev).double()
+    for m in model.modules():
+        if isinstance(m, nn.BatchNorm2d):
+            m.eps = 1e-12
+    X = torch.randn(64, 3, 32, 32, device=dev, dtype=torch.float64)
     Y = torch.randint(0, 10, (64,), device=dev)
     chunk = 32
     rel = lambda a, b: abs(a - b) / max(abs(a), 1e-12)  # noqa: E731
@@ -641,28 +651,28 @@ def selftest(args, dev):
         with torch.no_grad():  # BN scale symmetry: scale every conv's output filters
             for m in model.modules():
                 if isinstance(m, nn.Conv2d):
-                    m.weight.mul_(torch.exp(0.5 * torch.randn(m.weight.shape[0], generator=gs)).to(dev).view(-1, 1, 1, 1))
+                    m.weight.mul_(torch.exp(0.5 * torch.randn(m.weight.shape[0], generator=gs, dtype=torch.float64)).to(dev).view(-1, 1, 1, 1))
         b = snapshot()
-        checks += [("BN filter scaling: loss unchanged", rel(a["loss"], b["loss"]) < 1e-3),
+        checks += [("BN filter scaling: loss unchanged", rel(a["loss"], b["loss"]) < 1e-9),
                    ("BN filter scaling: raw trace changes", rel(a["tr"], b["tr"]) > 5e-2),
-                   ("BN filter scaling: normalized trace unchanged", rel(a["ntr"], b["ntr"]) < 1e-2),
-                   ("BN filter scaling: sum w^2 H_ii unchanged", rel(a["wtr"], b["wtr"]) < 1e-2),
-                   ("BN filter scaling: multiplicative sharpness unchanged", rel(a["mult"], b["mult"]) < 1e-2),
-                   ("BN filter scaling: ASAM unchanged", rel(a["asam"], b["asam"]) < 1e-2)]
+                   ("BN filter scaling: normalized trace unchanged", rel(a["ntr"], b["ntr"]) < 1e-6),
+                   ("BN filter scaling: sum w^2 H_ii unchanged", rel(a["wtr"], b["wtr"]) < 1e-6),
+                   ("BN filter scaling: multiplicative sharpness unchanged", rel(a["mult"], b["mult"]) < 1e-6),
+                   ("BN filter scaling: ASAM unchanged", rel(a["asam"], b["asam"]) < 1e-6)]
         with torch.no_grad():  # ReLU rescaling inside a block: BN1 affine x s, next conv's inputs / s
             blk = model.layer3[1]
-            s = torch.exp(0.5 * torch.randn(blk.bn1.weight.shape[0], generator=gs)).to(dev)
+            s = torch.exp(0.5 * torch.randn(blk.bn1.weight.shape[0], generator=gs, dtype=torch.float64)).to(dev)
             blk.bn1.weight.mul_(s)
             blk.bn1.bias.mul_(s)
             blk.conv2.weight.div_(s.view(1, -1, 1, 1))
         c = snapshot()
-        checks += [("ReLU rescaling: loss unchanged", rel(b["loss"], c["loss"]) < 1e-4),
-                   ("ReLU rescaling: sum w^2 H_ii unchanged", rel(b["wtr"], c["wtr"]) < 1e-2),
-                   ("ReLU rescaling: multiplicative sharpness unchanged", rel(b["mult"], c["mult"]) < 1e-2),
-                   ("ReLU rescaling: ASAM unchanged", rel(b["asam"], c["asam"]) < 1e-2)]
+        checks += [("ReLU rescaling: loss unchanged", rel(b["loss"], c["loss"]) < 1e-9),
+                   ("ReLU rescaling: sum w^2 H_ii unchanged", rel(b["wtr"], c["wtr"]) < 1e-6),
+                   ("ReLU rescaling: multiplicative sharpness unchanged", rel(b["mult"], c["mult"]) < 1e-6),
+                   ("ReLU rescaling: ASAM unchanged", rel(b["asam"], c["asam"]) < 1e-6)]
         # Lanczos against the Rayleigh quotient bound: lambda_max >= v^T H v for any unit v
         g = torch.Generator().manual_seed(1)
-        v = torch.randn(get_flat(model).numel(), generator=g).to(dev)
+        v = torch.randn(get_flat(model).numel(), generator=g, dtype=torch.float64).to(dev)
         v /= v.norm()
         hv = hvp_flat(model, X, Y, v, chunk)
         lam, _ = lambda_max(model, X, Y, chunk, iters=20)
@@ -758,6 +768,7 @@ def main():
     ap.add_argument("--save_every", type=int, default=5)
     ap.add_argument("--no_amp", dest="amp", action="store_false")
     ap.add_argument("--n_train", type=int, default=None, help="testing only: use a training subset")
+    ap.add_argument("--stop_after_epochs", type=int, default=0, help="testing only: simulate an interruption")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--width_test", type=int, default=8)
     ap.add_argument("--time_estimate", action="store_true")
