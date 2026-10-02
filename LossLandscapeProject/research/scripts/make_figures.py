@@ -514,6 +514,38 @@ def fig_memory(name="fig9_memory"):
     save(fig, name)
 
 
+# ---------------------------------------------------------------- Figure 10: depth
+def fig_depth(name="fig10_depth"):
+    if not glob.glob(os.path.join(RES, "depth_cifar10", "*.json")):
+        return
+    df = sweep_df("depth_cifar10")
+    df = df.assign(depth=df["arch"].str.extract(r"mlp_d(\d+)_")[0].astype(int),
+                   l_fun=np.log2(df["orbitmin_trace"]), l_coord=np.log2(df["ggn_trace"] / df["orbitmin_trace"]))
+    depths = sorted(df["depth"].unique())
+    fig, axs = plt.subplots(1, 2, figsize=(6.4, 2.4), sharey=True)
+    for ax, other in zip(axs, ["sgd", "sgdm"]):
+        for tgt, mk in [(0.3, "o"), (0.1, "s")]:
+            fun, coord = [], []
+            for dd in depths:
+                g = df[(df.depth == dd) & (df.target == tgt)]
+                A, B = g[g.opt == "adam"], g[g.opt == other]
+                fun.append(A.l_fun.mean() - B.l_fun.mean())
+                coord.append(A.l_coord.mean() - B.l_coord.mean())
+            ax.plot(depths, fun, marker=mk, color="#1c5cab", label=f"function, loss {tgt:g}")
+            ax.plot(depths, coord, marker=mk, color="#86b6ef", ls="--", label=f"coordinates, loss {tgt:g}")
+            ax.plot(depths, np.add(fun, coord), marker=mk, color=INK, lw=0.9, ls=":", label=f"raw trace, loss {tgt:g}")
+        ax.axhline(0, color="#c3c2b7", lw=0.8)
+        ax.set_xscale("log", base=2)
+        ax.set_xticks(depths)
+        ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.set_xlabel("hidden layers (width 128)")
+        ax.set_title(f"({'a' if other == 'sgd' else 'b'}) Adam vs {STYLE[other][0]}", loc="left")
+    axs[0].set_ylabel("log₂(Adam / X) of tr G\n← Adam flatter   Adam sharper →", fontsize=7)
+    axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=6.3)
+    fig.tight_layout(w_pad=1.0)
+    save(fig, name)
+
+
 if __name__ == "__main__":
     fig_flip(["main_cifar10_mlp", "main_mnist_mlp"])
     fig_cnn()
@@ -524,3 +556,4 @@ if __name__ == "__main__":
     fig_labelnoise()
     fig_bn()
     fig_memory()
+    fig_depth()
