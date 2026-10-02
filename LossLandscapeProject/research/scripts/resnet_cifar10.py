@@ -423,6 +423,15 @@ def make_optimizer(name, params, lr, wd):
     raise ValueError(name)
 
 
+def make_scaler(dev, enabled):
+    if dev.type != "cuda":
+        return None
+    try:
+        return torch.amp.GradScaler("cuda", enabled=enabled)
+    except (AttributeError, TypeError):  # older PyTorch
+        return torch.cuda.amp.GradScaler(enabled=enabled)
+
+
 def run_name(c):
     return f"{c['sweep']}_{c['opt']}_lr{c['lr']:g}_wd{c['wd']:g}_s{c['seed']}"
 
@@ -466,7 +475,7 @@ def train_run(cfg, data, args, out_dir, deadline):
     else:
         sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda t: 1.0)
     amp = args.amp and dev.type == "cuda"
-    scaler = torch.amp.GradScaler("cuda", enabled=amp) if dev.type == "cuda" else None
+    scaler = make_scaler(dev, amp)
     gen = torch.Generator().manual_seed(cfg["seed"])
     w_init = get_flat(model).cpu()
     targets = sorted(cfg["targets"], reverse=True)
@@ -686,7 +695,7 @@ def selftest(args, dev):
             model = model.to(memory_format=torch.channels_last)
         opt = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
         amp = args.amp and dev.type == "cuda"
-        scaler = torch.amp.GradScaler("cuda", enabled=amp) if dev.type == "cuda" else None
+        scaler = make_scaler(dev, amp)
         gen = torch.Generator().manual_seed(0)
         model.train()
         nsteps = 30 if dev.type == "cuda" else 3
