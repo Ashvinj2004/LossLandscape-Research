@@ -17,7 +17,9 @@ pd.set_option("display.width", 250)
 pd.set_option("display.max_columns", 40)
 
 # measure name -> (column, family). "raw" depends on the parameterization, "canon" is evaluated at the
-# balanced (min-norm) point of the rescaling orbit, "inv" is rescaling-invariant.
+# balanced (min-norm) point of the rescaling orbit, "inv" is rescaling-invariant, "row" is invariant to
+# scaling a unit's incoming row only, not to the compensating scaling of its outgoing weights
+# (filter normalization; see scripts/test_invariance.py).
 MEASURES = {
     "orig. rel. iso (test)": ("orig_rel_sharp_test", "raw"),
     "iso avg, s=0.01": ("avg_iso_0.01", "raw"),
@@ -33,7 +35,7 @@ MEASURES = {
     "orbit-min tr G": ("orbitmin_trace", "inv"),
     "orbit-min sum sqrt(G_ii)": ("orbitmin_sqrt_trace", "inv"),
     "mult avg, s=0.03": ("avg_mult_0.03", "inv"),
-    "filter avg, s=0.03": ("avg_filter_0.03", "inv"),
+    "filter avg, s=0.03": ("avg_filter_0.03", "row"),
     "ASAM worst, r=0.5": ("worst_asam_0.5", "inv"),
     "sum w^2 G_ii": ("ggn_trace_wscaled", "inv"),
 }

@@ -387,7 +387,8 @@ def weighted_hessian_trace(model, X, Y, n_probes=40, seed=0):
 def bn_measures(model, X, Y, te=None, w_init=None, seed=0):
     """Measures for BatchNorm networks (no diag-GGN / orbit machinery: BN couples samples and adds a
     second symmetry family). Raw: trace, lambda_max, isotropic, SAM. Invariant to all per-weight
-    rescalings: weighted trace, multiplicative and filter-normalized averages, ASAM."""
+    rescalings: weighted trace, multiplicative average, ASAM. Filter-normalized averages are invariant to
+    the pre-BN row scaling only, not to the BN-affine / next-layer ReLU rescaling."""
     L0, A0 = loss_acc(model, X, Y)
     r = {"ev_loss": L0, "ev_acc": A0}
     r.update(weight_stats(model, w_init))
