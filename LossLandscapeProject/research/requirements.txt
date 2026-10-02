@@ -1,0 +1,9 @@
+# Install PyTorch first (CPU build is enough; the experiments were run on a CPU):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# then:  pip install -r requirements.txt
+# Exact versions used for the paper (Windows, Python 3.14): requirements-lock-windows.txt
+torch>=2.3
+numpy>=1.26
+scipy>=1.11
+matplotlib>=3.8
+pandas>=2.1

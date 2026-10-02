@@ -1,0 +1,4 @@
+cnn_cifar10: 18 runs to do
+[1/18] cifar10_cnn_sgdm_lr0.01_bs128_s0.json reached 1772s (elapsed 1775s)
+[2/18] cifar10_cnn_sgd_lr0.1_bs128_s0.json reached 1835s (elapsed 1837s)
+[3/18] cifar10_cnn_sgd_lr0.03_bs128_s0.json time_limit 19146s (elapsed 19149s)

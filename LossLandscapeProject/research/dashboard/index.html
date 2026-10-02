@@ -1,0 +1,452 @@
+<title>Flat in the Wrong Coordinates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a survey notebook. Summary band on top, the four-step story, key readings,
+   then one "plate" per experiment (figure on a white plate + plain-English notes). */
+:root {
+  --paper: #f2f4f6;
+  --surface: #ffffff;
+  --ink: #142030;
+  --muted: #586577;
+  --line: #d8dde4;
+  --accent: #2a78d6;      /* Adam, and the page accent: the contour-map blue of the figures */
+  --accent-soft: #e3eefb;
+  --sgd: #c4511f;         /* SGD, matches the figures' orange (darkened for text-adjacent marks) */
+  --sgdm: #4a3aa7;        /* SGD+momentum, the figures' violet */
+  --plate-ink: #4a5565;   /* caption ink on the always-white figure plate */
+  --good: #1f7a3a;
+  --good-soft: #e3f3e7;
+  --warn: #9a6700;
+  --warn-soft: #fbf0d9;
+  --plate: #ffffff;       /* figures are printed on white in both themes */
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e141b; --surface: #16202b; --ink: #e6ecf2; --muted: #9aa8b8; --line: #2a3747;
+    --accent: #5b9be8; --accent-soft: #1b2e45; --sgd: #f08a5d; --sgdm: #9085e9;
+    --good: #5cc77a; --good-soft: #15301f; --warn: #e3b04b; --warn-soft: #33270f;
+    --plate: #ffffff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e141b; --surface: #16202b; --ink: #e6ecf2; --muted: #9aa8b8; --line: #2a3747;
+  --accent: #5b9be8; --accent-soft: #1b2e45; --sgd: #f08a5d; --sgdm: #9085e9;
+  --good: #5cc77a; --good-soft: #15301f; --warn: #e3b04b; --warn-soft: #33270f;
+  --plate: #ffffff; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font: 15px/1.6 var(--body);
+  padding-inline: 16px; padding-block: 0 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: clamp(22px, 3vw, 28px); font-weight: 700; }
+h3 { font-size: 18px; font-weight: 700; }
+p { margin: 0; }
+.prose { max-width: 68ch; display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+.label { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+code, .num { font-family: var(--mono); font-size: 0.92em; }
+.num { font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* header */
+header.top { padding-block: 32px 4px; display: grid; gap: 16px; }
+.mark { display: flex; align-items: center; gap: 10px; }
+.mark svg { flex: none; }
+.lede { font-size: 17px; max-width: 70ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px;
+  font: 500 12.5px/1.2 var(--body); border: 1px solid var(--line); background: var(--surface); }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.chip.done { background: var(--good-soft); border-color: transparent; }
+.chip.done .dot { background: var(--good); }
+.chip.run { background: var(--warn-soft); border-color: transparent; }
+.chip.run .dot { background: var(--warn); }
+nav.jump { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper);
+  padding-block: 10px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+nav.jump ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; flex-wrap: nowrap; }
+nav.jump a { display: block; white-space: nowrap; padding: 5px 10px; border-radius: 6px; text-decoration: none;
+  color: var(--ink); font-size: 13px; }
+nav.jump a:hover { background: var(--accent-soft); }
+
+/* tl;dr */
+.tldr { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 8px; padding: 20px 22px; display: grid; gap: 10px; }
+.tldr p { max-width: 75ch; }
+
+/* story */
+.story { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid;
+  gap: 8px; align-content: start; min-width: 0; }
+.step .n { font: 700 13px/1 var(--mono); color: var(--accent); }
+.step p { font-size: 14px; }
+
+/* readings */
+.readings { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.reading { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid;
+  gap: 6px; align-content: start; min-width: 0; }
+.reading .big { font: 700 30px/1.05 var(--display); font-variant-numeric: tabular-nums; }
+.reading .big small { font: 500 14px var(--body); color: var(--muted); }
+.reading p { font-size: 13.5px; color: var(--muted); }
+
+/* glossary */
+.gloss { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px 22px; }
+.gloss dt { font-weight: 600; }
+.gloss dd { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.gloss div { min-width: 0; }
+
+/* experiment plates */
+section.plate { display: grid; gap: 16px; padding-block: 8px; scroll-margin-top: 64px; }
+.plate-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.plate-body { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .plate-body { grid-template-columns: 1fr; } }
+figure { margin: 0; background: var(--plate); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+figure img { display: block; width: 100%; height: auto; }
+figure figcaption { color: var(--plate-ink); font-size: 12.5px; padding: 8px 4px 2px; }
+.notes { display: grid; gap: 12px; font-size: 14.5px; min-width: 0; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.callout { border-radius: 8px; padding: 12px 14px; font-size: 14px; }
+.callout.good { background: var(--good-soft); }
+.callout.warn { background: var(--warn-soft); }
+.callout b { display: block; margin-bottom: 2px; }
+.full { grid-column: 1 / -1; }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px/1.3 var(--body); color: var(--muted); background: var(--paper); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.pill.done { background: var(--good-soft); color: var(--good); }
+.pill.run { background: var(--warn-soft); color: var(--warn); }
+.adam { color: var(--accent); font-weight: 600; }
+.sgd { color: var(--sgd); font-weight: 600; }
+
+/* lists of issues / next steps */
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.box ul, .box ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: 14px; }
+pre.tree { margin: 0; overflow-x: auto; font: 12.5px/1.55 var(--mono); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 16px; color: var(--ink); }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="mark">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <ellipse cx="17" cy="17" rx="15" ry="11" fill="none" stroke="var(--accent)" stroke-width="1.3" opacity=".35"/>
+        <ellipse cx="17" cy="17" rx="10.5" ry="7.5" fill="none" stroke="var(--accent)" stroke-width="1.3" opacity=".6"/>
+        <ellipse cx="17" cy="17" rx="5.5" ry="4" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <circle cx="17" cy="17" r="1.6" fill="var(--ink)"/>
+      </svg>
+      <span class="label">Loss-landscape project · all experiments complete · 2 Oct 2026</span>
+    </div>
+    <h1>Flat in the Wrong Coordinates</h1>
+    <p class="lede">Your original study found that Adam's minima are flatter than SGD's. I rebuilt the study from scratch to check that result. It turned out to be an artifact, and the reason behind it is a publishable finding: <b>Adam quietly moves along a symmetry of the network that SGD cannot move along, and that movement makes its minima look flatter than they are.</b></p>
+    <div class="chips" aria-label="Project status">
+      <span class="chip done"><span class="dot"></span>MLP experiments complete (MNIST, CIFAR-10)</span>
+      <span class="chip done"><span class="dot"></span>Mechanism + causal test complete</span>
+      <span class="chip done"><span class="dot"></span>CNN replication complete (18 runs)</span>
+      <span class="chip done"><span class="dot"></span>Paper draft written (1 placeholder left: code link)</span>
+    </div>
+  </header>
+
+  <nav class="jump" aria-label="Sections">
+    <ul>
+      <li><a href="#summary">Summary</a></li>
+      <li><a href="#story">The story</a></li>
+      <li><a href="#concepts">Key ideas</a></li>
+      <li><a href="#same">Same function</a></li>
+      <li><a href="#mechanism">Mechanism</a></li>
+      <li><a href="#flip">Ordering flip</a></li>
+      <li><a href="#causal">Causal test</a></li>
+      <li><a href="#generalization">Generalization</a></li>
+      <li><a href="#original">Your original study</a></li>
+      <li><a href="#cnn">CNN</a></li>
+      <li><a href="#log">Experiment log</a></li>
+      <li><a href="#fixes">What went wrong</a></li>
+      <li><a href="#files">Files</a></li>
+      <li><a href="#next">Your next steps</a></li>
+    </ul>
+  </nav>
+
+  <section id="summary" class="tldr">
+    <span class="label">In one paragraph</span>
+    <p>A ReLU network computes exactly the same function if you multiply one neuron's incoming weights by any positive number <span class="num">c</span> and divide its outgoing weights by <span class="num">c</span>. Sharpness measures such as the Hessian trace and your noise-perturbation metric change under that rescaling, so they mix two things: how sharp the learned function really is, and which of these equivalent weight settings the network happens to sit at. I proved that SGD cannot move between equivalent settings to first order, while Adam can. I also showed that Adam moves to the setting where it looks flattest. On CIFAR-10 that alone makes Adam look about <b>2&times; flatter</b>, enough to reverse which optimizer wins. Measures that ignore the rescaling say the opposite of your original result.</p>
+  </section>
+
+  <section id="story" class="plate">
+    <div class="plate-head"><h2>The story, in order</h2><span class="label">four steps</span></div>
+    <div class="story">
+      <div class="step"><span class="n">1 · Your result</span><h3>Adam looked flatter</h3><p>The original scripts measured ΔL/L under weight noise &sigma;&nbsp;=&nbsp;0.01. On CIFAR-10, Adam scored <span class="num">0.0072</span> against SGD's <span class="num">0.0553</span>, about 8&times; "flatter", even though Adam's accuracy was only 33.7% versus 50.0%.</p></div>
+      <div class="step"><span class="n">2 · Suspicion</span><h3>Two confounds</h3><p>The metric was taken after a fixed 20 epochs, when the two optimizers had reached different training losses. It also uses noise of the same absolute size on every weight, so it depends on how the weights happen to be scaled.</p></div>
+      <div class="step"><span class="n">3 · Mechanism</span><h3>Adam drifts, SGD cannot</h3><p>For every neuron, SGD conserves <span class="num">‖w_in‖² − ‖w_out‖²</span> to first order; its first-order drift measured &lt; 3&times;10⁻⁷. Adam changes it at first order, at a rate &prop; learning rate &times; &radic;fan-in, and ends up near the flattest-looking equivalent weights.</p></div>
+      <div class="step"><span class="n">4 · Verdict</span><h3>The ranking reverses</h3><p>Compared at equal training loss, raw measures rate Adam flatter, while measures that ignore the rescaling rate it sharper. Undoing Adam's drift during training roughly doubles its raw sharpness and leaves the invariant measure unchanged.</p></div>
+    </div>
+  </section>
+
+  <section class="plate" aria-labelledby="readings-h">
+    <div class="plate-head"><h2 id="readings-h">Key readings</h2><span class="label">CIFAR-10 MLP unless noted</span></div>
+    <div class="readings">
+      <div class="reading"><span class="label">Networks trained</span><span class="big num">416</span><p>On your laptop's CPU, in 7 experiments. The 144 main runs were each measured with 17 sharpness measures at five matched training losses.</p></div>
+      <div class="reading"><span class="label">Coordinate bias</span><span class="big num">&times;2.0</span><p>The share of the Adam/SGD Hessian-trace ratio that comes from weight scaling alone: &minus;1.02 bits, 95% CI [&minus;1.16, &minus;0.87].</p></div>
+      <div class="reading"><span class="label">Orbit excess</span><span class="big num"><span class="adam">1.2</span> <small>vs</small> <span class="sgd">1.8–3.4</span></span><p>How far the raw trace sits above the flattest equivalent weights, for Adam versus SGD, SGD+momentum and SAM (medians).</p></div>
+      <div class="reading"><span class="label">P(Adam rated flatter)</span><span class="big num">0.64 <small>&rarr;</small> 0.01</span><p>At train loss 0.1: raw Hessian trace versus minimum sharpness, the rescaling-invariant version.</p></div>
+      <div class="reading"><span class="label">Causal test (Adam-Q)</span><span class="big num">&times;1.91 <small>/</small> &times;0.98</span><p>Removing Adam's drift multiplies raw trace by 1.91 and invariant sharpness by 0.98, with the same function.</p></div>
+    </div>
+  </section>
+
+  <section id="concepts" class="plate">
+    <div class="plate-head"><h2>Five ideas you need</h2><span class="label">glossary</span></div>
+    <dl class="gloss">
+      <div><dt>Rescaling symmetry</dt><dd>Multiply a hidden neuron's incoming weights and bias by <span class="num">c&nbsp;&gt;&nbsp;0</span> and divide its outgoing weights by <span class="num">c</span>. ReLU makes the output identical. All such rescaled versions form the network's "orbit".</dd></div>
+      <div><dt>Conserved quantity Q</dt><dd><span class="num">Q = ‖w_in‖² − ‖w_out‖²</span> per neuron. Gradient descent keeps it fixed (Du et al. 2018), which pins SGD to the scaling it started with.</dd></div>
+      <div><dt>Minimum sharpness</dt><dd>The smallest Hessian trace over the whole orbit (Ibayashi et al. 2021). It depends only on the function, never on the scaling, and is computed exactly from the curvature diagonal.</dd></div>
+      <div><dt>Orbit excess</dt><dd>Raw trace &divide; minimum sharpness (&ge; 1). The exact identity <b>raw trace = minimum sharpness &times; orbit excess</b> splits any comparison into a function part and a coordinates part.</dd></div>
+      <div><dt>Loss-matched comparison</dt><dd>Measure every run when its training loss first drops below 1, 0.3, 0.1, 0.03 and 0.01, then compare optimizers at the same loss. Fixed-epoch comparisons, as in the original study, mix up "how far it trained" with "which optimizer".</dd></div>
+    </dl>
+  </section>
+
+  <section id="same" class="plate">
+    <div class="plate-head"><h2>Same function, different landscape</h2><span class="label">Figure 1 of the paper</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig0_same_function.png" alt="Three contour plots of loss around trained networks: (a) Adam as trained looks wide and flat, Hessian trace 174; (b) the same network rescaled looks narrow and sharp, trace 473; (c) SGD as trained, trace 229.">
+        <figcaption>Loss contours along the same two random directions. (a) and (b) compute exactly the same function.</figcaption>
+      </figure>
+      <div class="notes">
+        <p>This is the whole problem in one picture, drawn the way your original contour plots were drawn.</p>
+        <ul>
+          <li>In its own weights, Adam's network (a) looks flatter than SGD's (c): trace <span class="num">174</span> vs <span class="num">229</span>.</li>
+          <li>Rescale the neurons of (a) without changing a single output and you get (b): trace <span class="num">473</span>, sharper than SGD.</li>
+          <li>So a contour plot or noise test of this kind cannot tell you which optimizer found a flatter function unless it accounts for the scaling.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="mechanism" class="plate">
+    <div class="plate-head"><h2>Why Adam ends up in flattering coordinates</h2><span class="label">66 + 24 runs, exact bookkeeping every step</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig2_mechanism.png" alt="Three panels: (a) cumulative drift of Q, Adam's first-order term near 1, SGD's first-order term near 1e-9; (b) Adam's drift rises linearly with learning rate times square root of fan-in, slope 0.93; (c) orbit excess over training, Adam flat near 1.2, SGD-family 1.8 to 3.4 on CIFAR-10.">
+        <figcaption>(a) per-step drift split into exact first- and second-order terms; (b) scaling law; (c) orbit excess over training.</figcaption>
+      </figure>
+      <div class="notes">
+        <ul>
+          <li><b>Proof.</b> Each step changes Q by an exact first-order term plus a second-order term. For SGD the first-order term is identically zero (Euler's identity for homogeneous functions); measured, it is below <span class="num">3&times;10⁻⁷</span>. For Adam it is <span class="num">0.02–6.2</span>, 23–800&times; its own second-order term.</li>
+          <li><b>Scaling law.</b> Adam's drift grows as <span class="num">&eta;<sup>0.91</sup> &middot; (&radic;fan-in)<sup>0.94</sup></span> at small learning rates, matching the sign-descent prediction <span class="num">&eta;&radic;fan-in</span>.</li>
+          <li><b>Not just Adam.</b> RMSprop and plain signSGD do the same thing: orbit excess <span class="num">1.10–1.28</span> versus <span class="num">1.68–2.41</span> for SGD and SGD+momentum.</li>
+          <li><b>Where it ends.</b> CIFAR-10 networks start at excess <span class="num">3.66</span>. Adam moves to about <span class="num">1.2</span> and stays there; SGD stays far above.</li>
+        </ul>
+        <div class="callout warn"><b>One thing I got wrong first</b>I expected the drift to come from the second-order "step size &times; fan-in" term. The measurements showed the first-order term dominates, so the paper uses the measured mechanism.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="flip" class="plate">
+    <div class="plate-head"><h2>The ranking depends on the measure</h2><span class="label">144 runs · 4 optimizers · 3 seeds · matched loss</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig1_flip.png" alt="(a) Dot plot: coordinate-dependent measures give probabilities 0.5 to 1 that Adam is flatter; invariant measures give 0 to 0.4 on CIFAR-10. (b) Bar chart: on CIFAR-10 the coordinate term is about minus 1 bit and the function term plus 0.3 to 0.7 bits; on MNIST the coordinate term changes sign during training.">
+        <figcaption>(a) Probability Adam is rated flatter than SGD, per measure. (b) The exact function &times; coordinates split of the Hessian-trace ratio.</figcaption>
+      </figure>
+      <div class="notes">
+        <ul>
+          <li><b>CIFAR-10:</b> your metric, isotropic noise and the Hessian trace say Adam is flatter (P &asymp; 0.62–0.75). Minimum sharpness, filter-normalized and multiplicative noise say it is sharper (P &asymp; 0.01–0.31).</li>
+          <li><b>Why:</b> the coordinate part is &asymp; &minus;1 bit (&times;2 in Adam's favour) at every loss level, larger than the function part (+0.4 to +0.7 bits, Adam sharper).</li>
+          <li><b>MNIST is subtler:</b> the coordinate part changes sign during training, so the raw ranking flips mid-training. The function part never favours Adam.</li>
+          <li><b>Sanity check:</b> SAM, which is built to find flat minima, comes out clearly flatter than Adam only under invariant measures.</li>
+        </ul>
+        <div class="callout good"><b>What the paper claims</b>The claim is not "Adam is always sharper." It is that raw flatness comparisons between Adam and SGD contain a scaling bias as big as the effect being measured, and the paper shows where that bias comes from.</div>
+      </div>
+    </div>
+    <div class="tbl">
+      <table>
+        <caption class="label" style="caption-side:top;text-align:left;padding:10px 12px">P(Adam rated flatter than SGD), CIFAR-10 MLP, 95% bootstrap CI</caption>
+        <thead><tr><th>Measure</th><th>Type</th><th class="r">loss 0.3</th><th class="r">loss 0.1</th><th class="r">loss 0.01</th></tr></thead>
+        <tbody>
+          <tr><td>Your original metric (ΔL/L, test)</td><td>raw</td><td class="r">0.66</td><td class="r">0.62 <span class="muted">[0.40, 0.81]</span></td><td class="r">0.67</td></tr>
+          <tr><td>Hessian trace (Gauss–Newton)</td><td>raw</td><td class="r">0.75</td><td class="r">0.64 <span class="muted">[0.44, 0.83]</span></td><td class="r">0.72</td></tr>
+          <tr><td>&lambda;<sub>max</sub> (top eigenvalue)</td><td>raw</td><td class="r">0.37</td><td class="r">0.29</td><td class="r">0.45</td></tr>
+          <tr><td>Minimum sharpness</td><td>invariant</td><td class="r">0.06</td><td class="r">0.01 <span class="muted">[0.00, 0.06]</span></td><td class="r">0.22</td></tr>
+          <tr><td>Filter-normalized noise</td><td>invariant</td><td class="r">0.14</td><td class="r">0.08</td><td class="r">0.06</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="causal" class="plate">
+    <div class="plate-head"><h2>Causal test: switch the drift off</h2><span class="label">Adam-Q · 36 runs</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig3_intervention.png" alt="Dot plot of log2 ratio Adam-Q over Adam: on CIFAR-10 orbit excess and raw measures rise by about 1 bit, invariant measures stay near 0; on MNIST all stay near 0 except lambda max.">
+        <figcaption>Adam-Q &divide; Adam at matched loss (median, IQR). Blue: CIFAR-10. Orange: MNIST.</figcaption>
+      </figure>
+      <div class="notes">
+        <p><b>Adam-Q</b> is Adam plus one extra step: after every update it rescales each neuron back so that Q equals its starting value. The function is untouched; only the scaling changes.</p>
+        <ul>
+          <li><b>CIFAR-10:</b> orbit excess <span class="num">1.18 &rarr; 2.35</span>. Raw trace &times;<span class="num">1.91</span>, isotropic noise &times;<span class="num">1.96</span>, your metric &times;<span class="num">1.64</span>. Minimum sharpness &times;<span class="num">0.98</span>. Test accuracy unchanged.</li>
+          <li><b>MNIST:</b> the scaling barely moves (excess 1.21 &rarr; 1.17), so the raw measures barely move either. The size of the effect follows the size of the cause.</li>
+          <li>Against SGD, Adam-Q is no longer rated flatter (P drops from 0.64–0.75 to 0.21–0.35).</li>
+        </ul>
+        <div class="callout warn"><b>Unexpected result</b>In 6 of 18 CIFAR configurations (the noisiest ones), Adam-Q stopped improving at loss &asymp; 0.05–0.3 while Adam reached 0.01. The drift may help Adam train, not only distort measurements. The paper reports this as an open question.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="generalization" class="plate">
+    <div class="plate-head"><h2>Does it matter for predicting generalization?</h2><span class="label">Kendall &tau; with the accuracy gap</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig5_generalization.png" alt="Two panels of Kendall tau: raw measures drop from about 0.55 within an optimizer to about 0.37 when optimizers are pooled; minimum sharpness stays near 0.6.">
+        <figcaption>Correlation within one optimizer (light) versus across optimizers (dark).</figcaption>
+      </figure>
+      <div class="notes">
+        <ul>
+          <li>Inside one optimizer, raw trace and minimum sharpness predict the generalization gap equally well (&tau; &asymp; 0.55 vs 0.59).</li>
+          <li>Mix optimizers together and the raw trace drops to <span class="num">0.38</span> (CIFAR-10) and <span class="num">0.47</span> (MNIST), while minimum sharpness stays at <span class="num">0.61</span> and <span class="num">0.62</span>.</li>
+          <li>The bias only hurts cross-optimizer comparisons, which is what you would expect from an optimizer-dependent scaling.</li>
+          <li>Your original metric is the weakest cross-optimizer predictor (&tau; = 0.36 and 0.14).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="original" class="plate">
+    <div class="plate-head"><h2>Your original study, re-run properly</h2><span class="label">same protocol · 5 seeds · 20 runs</span></div>
+    <div class="prose"><p>I reproduced your exact setup (raw 0–1 inputs, full datasets, 20 epochs, batch 64, SGD lr 0.01 vs Adam lr 0.001) with five seeds. Your result replicates, but for a different reason on each dataset.</p></div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Mean over 5 seeds</th><th class="r">CIFAR-10 <span class="sgd">SGD</span></th><th class="r">CIFAR-10 <span class="adam">Adam</span></th><th class="r">MNIST <span class="sgd">SGD</span></th><th class="r">MNIST <span class="adam">Adam</span></th></tr></thead>
+        <tbody>
+          <tr><td>Your metric ΔL/L</td><td class="r">0.034</td><td class="r">0.012</td><td class="r">0.040</td><td class="r">0.014</td></tr>
+          <tr><td>Training loss when measured</td><td class="r">1.42</td><td class="r">1.29</td><td class="r">0.136</td><td class="r">0.008</td></tr>
+          <tr><td>Hessian trace</td><td class="r">1004</td><td class="r">395</td><td class="r">96.2</td><td class="r">9.7</td></tr>
+          <tr><td>&nbsp;&nbsp;= minimum sharpness (function)</td><td class="r">353</td><td class="r">320</td><td class="r">72.0</td><td class="r">8.0</td></tr>
+          <tr><td>&nbsp;&nbsp;&times; orbit excess (scaling)</td><td class="r">2.85</td><td class="r">1.23</td><td class="r">1.34</td><td class="r">1.21</td></tr>
+          <tr><td>Filter-normalized noise (&times;10⁴)</td><td class="r">78</td><td class="r">207</td><td class="r">41</td><td class="r">17</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="two">
+      <div class="box"><h3>CIFAR-10: a scaling artifact</h3><p>The 2.5&times; trace gap is almost all scaling (excess 2.85 vs 1.23). The function-level sharpness is nearly equal, and invariant noise tests rate Adam 2.5&times; sharper.</p></div>
+      <div class="box"><h3>MNIST: a loss-level artifact</h3><p>After 20 epochs Adam's training loss is 17&times; lower than SGD's, and cross-entropy curvature shrinks with the loss. Comparing at equal loss removes this.</p></div>
+    </div>
+  </section>
+
+  <section id="cnn" class="plate">
+    <div class="plate-head"><h2>Convolutional network check</h2><span class="pill done">done · 18 runs</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="fig6_cnn.png" alt="(a) Orbit excess on the CNN: Adam stays between 1.45 and 1.78 while SGD and SGD+M rise to about 3.2. (b) Function and coordinate split: Adam's function term is +0.7 to +2.3 bits sharper, its coordinate term -0.2 to -0.9 bits flatter.">
+        <figcaption>(a) Orbit excess over training. (b) The function &times; coordinates split of the Adam / SGD and Adam / SGD+M trace ratios.</figcaption>
+      </figure>
+      <div class="notes">
+        <p>A small CNN (2 conv layers + 2 dense, CIFAR-10), with neurons replaced by whole channels and the rescaling carried through max-pooling and flatten.</p>
+        <ul>
+          <li><b>Same mechanism:</b> Adam's channel imbalance is about 2&times; SGD's in every layer, and its orbit excess stays at <span class="num">1.45–1.78</span> while SGD and SGD+M climb to <span class="num">3.2</span>.</li>
+          <li><b>Same bias, growing over training:</b> the coordinate part favours Adam by <span class="num">&minus;0.31 &rarr; &minus;0.93</span> bits against SGD; all confidence intervals exclude zero.</li>
+          <li><b>Different outcome:</b> on this network Adam is much sharper at the function level (+0.7 to +2.3 bits), so the bias hides the gap instead of reversing it.</li>
+          <li><b>Against SGD+M</b> the hiding is almost complete. The raw trace says "no clear difference" (P = 0.25–0.50), while every invariant measure says Adam is about 2&times; sharper (P = 0.00).</li>
+        </ul>
+        <div class="callout good"><b>The three settings together</b>The same bias reverses the ranking (CIFAR-10 MLP), flips it during training (MNIST), or masks a real difference (CNN), depending on how large the true difference is.</div>
+        <p class="muted" style="font-size:13px">The three Adam runs at the lower learning rate stopped at the 150-epoch cap at loss 0.018–0.034, so the loss-0.01 comparison uses the other three Adam runs.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="log" class="plate">
+    <div class="plate-head"><h2>Experiment log</h2><span class="label">everything that ran</span></div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Experiment</th><th class="r">Runs</th><th>What it tests</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><code>pilot_cifar</code></td><td class="r">12</td><td>First look with your original preprocessing; found the edge-of-stability effect (&lambda;<sub>max</sub> &asymp; 2/lr)</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>calib_cifar10</code>, <code>calib_mnist</code></td><td class="r">96</td><td>Which learning rates train stably at each batch size</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>main_cifar10_mlp</code>, <code>main_mnist_mlp</code></td><td class="r">144</td><td>Main audit: SGD, SGD+M, SAM, Adam &times; 2 lrs &times; 3 batch sizes &times; 3 seeds, 17 measures at 5 matched losses</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>drift</code></td><td class="r">90</td><td>Exact per-step drift bookkeeping; scaling law; RMSprop and signSGD</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>interv_cifar10</code>, <code>interv_mnist</code></td><td class="r">36</td><td>Adam-Q causal intervention</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>orig_replication</code></td><td class="r">20</td><td>Your exact original protocol with 5 seeds</td><td><span class="pill done">done</span></td></tr>
+          <tr><td><code>cnn_cifar10</code></td><td class="r">18</td><td>Does it hold for a conv net? (rescaling per channel)</td><td><span class="pill done">done</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="fixes" class="plate">
+    <div class="plate-head"><h2>What went wrong, and how it was handled</h2><span class="label">for your own understanding</span></div>
+    <div class="two">
+      <div class="box">
+        <h3>Problems in the original study</h3>
+        <ul>
+          <li>Sharpness was compared after a fixed number of epochs, so the two optimizers were at different training losses (17&times; apart on MNIST).</li>
+          <li>ΔL/L divides by the loss, so a poorly trained model looks flat automatically.</li>
+          <li>Noise of the same absolute size on every weight depends on how the weights are scaled, which is exactly what Adam changes.</li>
+          <li>One seed and 10 noise draws: no error bars.</li>
+          <li>Raw 0–1 inputs made Adam at lr 0.001 unstable on CIFAR-10.</li>
+          <li>The 2-D contour directions were not filter-normalized.</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Things I corrected along the way</h3>
+        <ul>
+          <li>My first theory of the drift (second-order, fan-in) was wrong; the data showed it is first-order.</li>
+          <li>The "minimum over rescalings" measure already existed (Ibayashi et al. 2021), so the paper credits it instead of claiming it.</li>
+          <li>MNIST came out more mixed than CIFAR-10, so the paper's claim was narrowed to what the data supports.</li>
+          <li>6 of 18 Adam-Q runs stalled; this is reported, not hidden.</li>
+          <li>Your laptop slept from 05:15 to 10:00 and cut CNN runs short. I deleted those, reran them, and made the sweeps keep the PC awake while they run.</li>
+          <li>Every number in the paper was re-checked against the raw results, and several overstated ones were corrected.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="files" class="plate">
+    <div class="plate-head"><h2>Where everything is</h2><span class="label">C:\Projects\Loss Landscape Research</span></div>
+<pre class="tree">Loss Landscape Research/
+├── .venv/                        Python environment (PyTorch, CPU)
+└── LossLandscapeProject/
+    ├── method*.py, plots/, results/   your original study (untouched)
+    └── research/
+        ├── paper/main.tex, refs.bib   the paper (LaTeX, upload to Overleaf with ../figures)
+        ├── figures/                   all paper figures, PDF + PNG
+        ├── README.md                  how to reproduce every experiment
+        ├── lls/                       the library: data, models, training, 17 measures, rescaling maths
+        ├── scripts/                   sweeps, analysis, bootstrap CIs, figures, correctness tests
+        ├── results/                   one JSON per run: settings, training curve, every measurement
+        ├── data/                      MNIST and CIFAR-10 files
+        ├── checkpoints/               saved weights of every main run
+        └── dashboard/                 this page's source</pre>
+  </section>
+
+  <section id="next" class="plate">
+    <div class="plate-head"><h2>Your next steps</h2><span class="label">in order</span></div>
+    <div class="box">
+      <ol>
+        <li><b>Read the paper draft</b> (<code>research/paper/main.tex</code>) and this page until you can explain every step yourself. Professors will ask about the proof and the Adam-Q test.</li>
+        <li><b>Decide authorship</b>: the draft lists only you, with a comment where your supervisor, Dr. E. Sreenivasa Reddy, can be added.</li>
+        <li><b>Compile on Overleaf</b>: upload <code>paper/</code> and <code>figures/</code> keeping the folder structure (the paper loads figures from <code>../figures/</code>).</li>
+        <li><b>Put the code on GitHub</b> (e.g. under Ashvinj2004) and paste the URL into the paper's "Code and data" line. I did not publish anything for you.</li>
+        <li><b>Submit</b>: arXiv (cs.LG; first-time submitters need an endorsement), and consider a workshop on optimization or the science of deep learning.</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>Built from the project's own result files. Figures are the ones in <code>research/figures/</code>; every number above appears in, or was computed alongside, the paper draft.</footer>
+</div>

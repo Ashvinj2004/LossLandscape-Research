@@ -1,0 +1,10 @@
+# Python environment and caches
+.venv/
+__pycache__/
+*.pyc
+# large or regenerable data (re-create with LossLandscapeProject/research/scripts/get_data.py)
+LossLandscapeProject/research/data/
+LossLandscapeProject/research/.cache/
+LossLandscapeProject/research/checkpoints/
+# local app configuration
+LossLandscapeProject/.claude/
