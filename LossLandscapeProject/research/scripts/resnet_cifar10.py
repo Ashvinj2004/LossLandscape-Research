@@ -619,9 +619,12 @@ def sweep_configs(sweep):
 
 # -------------------------------------------------------------------------------------- selftest
 def selftest(args, dev):
-    """Correctness checks on the target device, then (optionally) a timing estimate for the sweeps."""
+    """Exactness checks (float64, on the CPU, where they take seconds; GPUs are slow in float64), a check that
+    the GPU computes the same Hessian-vector products, then (optionally) a timing estimate for the sweeps."""
     ok = True
     torch.manual_seed(0)
+    final_dev, dev = dev, torch.device("cpu")
+    print("exactness checks (float64, on the CPU) ...", flush=True)
     # The invariance checks test the code, so they run in float64 and with BatchNorm's epsilon -> 0, where
     # every invariance is exact. (With the default epsilon = 1e-5 the BN scale symmetry is approximate: the
     # loss moves by ~1e-6 and gradients by up to a few percent under large filter rescalings; and in float32
@@ -693,12 +696,24 @@ def selftest(args, dev):
         set_flat(m64, w0)
         fd = (gp - gm) / (2 * eps)
         checks.append(("HVP matches finite differences (float64)", float((hv - fd).norm() / fd.norm()) < 1e-4))
+        hv64 = hv
+    # the same Hessian-vector product on the device the experiment uses, in float32
+    if final_dev.type != "cpu":
+        print("checking the GPU against the CPU ...", flush=True)
+        mg = ResNet18(width=args.width_test).to(final_dev)
+        mg.load_state_dict({k: t.float() if t.is_floating_point() else t for k, t in m64.state_dict().items()})
+        with landscape_mode(mg):
+            hvg = hvp_flat(mg, X64.float().to(final_dev), Y[:32].to(final_dev), v.float().to(final_dev), 16).double().cpu()
+        checks.append(("GPU float32 HVP matches CPU float64", float((hvg - hv64).norm() / hv64.norm()) < 1e-3))
+    dev = final_dev
     for nm, good in checks:
         print(f"  [{'PASS' if good else 'FAIL'}] {nm}", flush=True)
         ok &= bool(good)
     # 3. timing at full width on the real data pipeline
     if args.time_estimate:
+        print("loading CIFAR-10 (downloads about 170 MB the first time) ...", flush=True)
         xtr, ytr, xte, yte, _ = load_cifar10(args.data)
+        print("timing training steps and a Hessian-vector product at full width ...", flush=True)
         data = GPUData(xtr, ytr, xte, yte, dev, args.n_eval)
         model = ResNet18(width=64).to(dev)
         if dev.type == "cuda":
