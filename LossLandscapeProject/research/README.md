@@ -61,6 +61,7 @@ Every figure and table can be regenerated from the stored JSONs without retraini
 python scripts/test_ggn.py             # diag-GGN matches brute force
 python scripts/test_rescale.py         # function preserved, transport exact, orbit-min is a minimum
 python scripts/test_invariance.py      # which perturbation measures are invariant to which rescalings
+python scripts/test_hessian_diag.py    # diag(H) = diag(G) for MLP/CNN, not with BatchNorm
 python scripts/sweep.py calib_cifar10  # learning-rate calibration (training only)
 python scripts/sweep.py main_cifar10_mlp
 python scripts/sweep.py main_mnist_mlp
@@ -157,3 +158,4 @@ loss-matched checkpoint. `*_summary.json` files hold the numbers quoted in the p
 | SGD first-order drift (must be exactly 0) | < 3e-7 (float32 round-off) |
 | multiplicative, ASAM, Σ w²H_ii under random neuron / BN rescalings (`test_invariance.py`) | unchanged (< 2e-4 relative) |
 | filter-normalized sharpness under the same rescalings | changes ×9.5 (neuron), ×19 (BN affine): only row-scale invariant |
+| diag(H) vs diag(G), exact, float64 (`test_hessian_diag.py`) | equal to 5e-16 for MLP and CNN (so tr H = tr G); differ with BatchNorm |

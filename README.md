@@ -26,7 +26,8 @@ A ReLU network computes exactly the same function if one neuron's incoming weigh
 any `c > 0` and its outgoing weights divided by `c`. Most sharpness measures (Hessian trace, random
 perturbations, SAM sharpness) change under this rescaling. So they measure two things at once: how
 sharp the learned **function** is, and which of the equivalent **coordinates** the network sits at.
-For the Hessian trace the split is exact:
+For the Hessian trace the split is exact (in ReLU networks without normalization layers the Hessian
+and Gauss–Newton diagonals coincide, so the trace is the same for both):
 
 ```
 raw trace  =  minimum sharpness (function only)  ×  orbit excess (coordinates only, ≥ 1)

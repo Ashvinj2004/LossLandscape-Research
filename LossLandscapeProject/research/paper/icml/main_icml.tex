@@ -37,7 +37,7 @@
 \maketitle
 
 \begin{abstract}
-Whether Adam or SGD finds flatter minima is often measured and rarely agreed upon. We show that such comparisons mix two factors: the geometry of the learned function, and the point of the network's rescaling-symmetry orbit at which that function happens to be represented. For the Hessian (Gauss--Newton) trace the split is exact: raw trace $=$ \emph{minimum sharpness} $\times$ \emph{orbit excess}. We prove that SGD cannot move along these orbits at first order, whereas Adam and other diagonally preconditioned methods drift along them at a rate $\propto\eta\sqrt{\text{fan-in}}$ and settle near the trace-minimizing coordinates. Across 162 loss-matched runs and up to 17 measures, the resulting coordinate factor ($\approx2\times$ on a CIFAR-10 MLP) is as large as the functional differences being measured: it reverses the Adam--SGD flatness ranking on a CIFAR-10 MLP, flips it during training on MNIST, and masks a large difference on a CNN, and it does not grow with depth. A causal intervention that undoes Adam's drift roughly doubles raw sharpness and leaves minimum sharpness unchanged; it also shows that the drift lowers Adam's own update noise. With label noise, the orbit becomes an exactly computable testbed for implicit regularization: SGD drifts toward minimum trace and Adam toward minimum $\sum_i\sqrt{G_{ii}}$, as theory predicts, in all 20 runs of each. With BatchNorm the bias reverses direction. Cross-optimizer flatness comparisons should report rescaling-invariant measures, or at least the orbit excess.
+Whether Adam or SGD finds flatter minima is often measured and rarely agreed upon. We show that such comparisons mix two factors: the geometry of the learned function, and the point of the network's rescaling-symmetry orbit at which that function happens to be represented. For the Hessian trace, which in ReLU networks without normalization layers equals the Gauss--Newton trace, the split is exact: raw trace $=$ \emph{minimum sharpness} $\times$ \emph{orbit excess}. We prove that SGD cannot move along these orbits at first order, whereas Adam and other diagonally preconditioned methods drift along them at a rate $\propto\eta\sqrt{\text{fan-in}}$ and settle near the trace-minimizing coordinates. Across 162 loss-matched runs and up to 17 measures, the resulting coordinate factor ($\approx2\times$ on a CIFAR-10 MLP) is as large as the functional differences being measured: it reverses the Adam--SGD flatness ranking on a CIFAR-10 MLP, flips it during training on MNIST, and masks a large difference on a CNN, and it does not grow with depth. A causal intervention that undoes Adam's drift roughly doubles raw sharpness and leaves minimum sharpness unchanged; it also shows that the drift lowers Adam's own update noise. With label noise, the orbit becomes an exactly computable testbed for implicit regularization: SGD drifts toward minimum trace and Adam toward minimum $\sum_i\sqrt{G_{ii}}$, as theory predicts, in all 20 runs of each. With BatchNorm the bias reverses direction. Cross-optimizer flatness comparisons should report rescaling-invariant measures, or at least the orbit excess.
 \end{abstract}
 
 %===============================================================================
@@ -58,7 +58,7 @@ This paper began as an attempt to answer that question with a standard tool, the
 
 \paragraph{Contributions.}
 \begin{itemize}[leftmargin=1.1em,itemsep=1pt,topsep=2pt]
-\item \textbf{An exact decomposition} (\S\ref{sec:setup}): the Gauss--Newton trace factors into the minimum sharpness of the function \citep{ibayashi2021minimum} times an orbit excess $\ge1$ that depends only on the representation; both are cheap to compute exactly.
+\item \textbf{An exact decomposition} (\S\ref{sec:setup}): the Hessian trace, equal to the Gauss--Newton trace for ReLU networks without normalization (Lemma~\ref{lem:diag}), factors into the minimum sharpness of the function \citep{ibayashi2021minimum} times an orbit excess $\ge1$ that depends only on the representation; both are cheap to compute exactly.
 \item \textbf{A mechanism with a proof and a scaling law} (\S\ref{sec:mechanism}): the first-order drift of the conserved quantity $\|w_{\mathrm{in}}\|^2-\|w_{\mathrm{out}}\|^2$ vanishes for SGD, is second order for momentum, and is generically nonzero for diagonal preconditioners, scaling as $\eta\sqrt{\text{fan-in}}$.
 \item \textbf{A loss-matched audit} (\S\ref{sec:audit}): the coordinate factor reverses, flips or masks optimizer rankings depending on the size of the true difference, at every depth we test.
 \item \textbf{A causal test} (\S\ref{sec:intervention}): removing Adam's drift doubles raw sharpness and leaves invariant sharpness unchanged; holding Adam at different orbit points shows the drift also helps it train.
@@ -102,7 +102,15 @@ Let $Q_j=\|a_j\|^2-\|c_j\|^2$. For an update $\theta^+=\theta+u$, expanding the 
 SGD moves each weight in proportion to its partner weights, which is what keeps $Q_j$ fixed. Sign-like updates move every coordinate by $\approx\eta$; since $\|x\|_1\approx\kappa\sqrt{d}\|x\|_2$ for dense vectors, a unit whose fan-in exceeds its fan-out drifts toward large incoming norm at a rate $\propto\eta\sqrt{d_{\mathrm{in}}}$. Adam behaves like sign descent when gradient noise is small \citep{balles2018dissecting,bernstein2018signsgd}.
 \end{remark}
 
-\textbf{Exact transport of curvature.} A rescaling acts as $\theta'=D\theta$ with $D$ diagonal and positive, so the Hessian and the Gauss--Newton matrix $G$ transform \emph{exactly} as $G(\theta')=D^{-1}G(\theta)D^{-1}$: $\mathrm{diag}(G)$ anywhere on the orbit follows from $\mathrm{diag}(G)$ at $\theta$.
+\textbf{Exact transport of curvature.} A rescaling acts as $\theta'=D\theta$ with $D$ diagonal and positive, so the Hessian and the Gauss--Newton matrix $G$ transform \emph{exactly}, $H(\theta')=D^{-1}H(\theta)D^{-1}$ and $G(\theta')=D^{-1}G(\theta)D^{-1}$: $\mathrm{diag}(G)$ anywhere on the orbit follows from $\mathrm{diag}(G)$ at $\theta$.
+
+\begin{lemma}\label{lem:diag}
+For networks of affine layers and piecewise-linear activations and pooling (ReLU, max-pooling) without normalization layers, and a loss twice differentiable in the outputs, $\mathrm{diag}\,H=\mathrm{diag}\,G$ almost everywhere; hence $\tr H=\tr G$.
+\end{lemma}
+\begin{proof}
+$H=G+\frac1N\sum_{n,k}\frac{\partial\ell}{\partial f_k}\nabla^2f_k$, and with the activation pattern and all other parameters fixed $f$ is affine in each single parameter, so the second term has a zero diagonal.
+\end{proof}
+$H\ne G$ off the diagonal, so we compute $\lambda_{\max}$ from $H$; the trace, $\MS_p$ and the decomposition below are the same for both in our MLPs and CNN (checked to $5\times10^{-16}$ in float64; the Hutchinson $\tr H$ matches the exact $\tr G$ within its sampling error at all 913 MLP checkpoints). With BatchNorm the lemma fails (diagonals differ by up to $94\%$), so \S\ref{sec:bn} uses Hessian-based measures only.
 
 \begin{definition}[Minimum sharpness and orbit excess]
 Following \citet{ibayashi2021minimum}, for $p>0$ let $\MS_p(\theta)=\min_{\theta'\in\mathrm{orbit}(\theta)}\sum_iG_{ii}(\theta')^{p}$. $\MS_1$ is the minimal trace and $\MS_{1/2}$ the orbit minimum of Adam's implicit regularizer \citep{li2025adam}. The \emph{orbit excess} is $E=\tr G/\MS_1\ge1$, so that
@@ -118,7 +126,7 @@ $\MS_1$ is constant on the orbit, so a comparison of $\log\tr G$ splits \emph{ex
 \textbf{Data and models.} MNIST and CIFAR-10 with a class-balanced 10k-example training subset, the full test set and per-channel standardization; an MLP (in--128--64--10, the architecture of the original study) and a small CNN (two $3{\times}3$ conv layers with max-pooling, then two dense layers), without normalization layers.
 \textbf{Optimizers.} SGD, SGD with momentum $0.9$ (SGD+M), SAM ($\rho=0.05$) and Adam, each with two base learning rates and batch sizes $\{32,128,512\}$ ($\eta=\eta_0\sqrt{B/32}$) and three seeds: 72 runs per dataset, with rates chosen by a calibration sweep (App.~\ref{app:calibration}).
 \textbf{Loss matching.} Fixed-epoch comparisons conflate the optimizer with how far training has progressed, and cross-entropy curvature shrinks with the loss. Each run is therefore measured when its full training loss first falls below $\{1,0.3,0.1,0.03,0.01\}$, and only checkpoints at the same target are compared.
-\textbf{Measures.} On 4096 training examples we compute 17 measures (App.~\ref{app:measures}). \emph{Coordinate-dependent:} the original metric (relative isotropic sharpness on the test set), isotropic average sharpness, the Hessian trace (Hutchinson) and exact $\tr G$, $\lambda_{\max}$, worst-case SAM sharpness, $\sum_i\sqrt{G_{ii}}$, and several of these at the minimum-norm point. \emph{Rescaling-invariant:} $\MS_1$, $\MS_{1/2}$, multiplicative average sharpness, ASAM \citep{kwon2021asam} and $\sum_iw_i^2G_{ii}$. Filter-normalized sharpness \citep{li2018visualizing} is invariant to row scaling only: a random neuron rescaling changes it $9.5\times$.
+\textbf{Measures.} On 4096 training examples we compute 17 measures (App.~\ref{app:measures}). \emph{Coordinate-dependent:} the original metric (relative isotropic sharpness on the test set), isotropic average sharpness, the Hessian trace (Hutchinson estimate, and exactly as $\tr G$), $\lambda_{\max}$, worst-case SAM sharpness, $\sum_i\sqrt{G_{ii}}$, and several of these at the minimum-norm point. \emph{Rescaling-invariant:} $\MS_1$, $\MS_{1/2}$, multiplicative average sharpness, ASAM \citep{kwon2021asam} and $\sum_iw_i^2G_{ii}$. Filter-normalized sharpness \citep{li2018visualizing} is invariant to row scaling only: a random neuron rescaling changes it $9.5\times$.
 \textbf{Statistic.} $P(S_{\mathrm{Adam}}<S_X)$ over all Adam/$X$ configuration pairs sharing a seed and loss target (108 pairs; $0.5$ = no difference), and the exact split of $\log_2(\tr G_{\mathrm{Adam}}/\tr G_X)$ into function and coordinate terms via~\eqref{eq:factor}. 95\% intervals from a cluster bootstrap over runs.
 
 %===============================================================================
@@ -180,7 +188,7 @@ Measure & $0.3$ & $0.1$ & $0.01$ & $0.3$ & $0.1$ & $0.01$\\
 \midrule
 Original metric & 0.66 & 0.62 & 0.67 & 0.27 & 0.62 & 0.97\\
 Isotropic average & 0.74 & 0.69 & 0.75 & 0.41 & 0.79 & 0.90\\
-Hessian trace & 0.74 & 0.62 & 0.74 & 0.06 & 0.54 & 0.83\\
+Hessian trace (Hutch.) & 0.74 & 0.62 & 0.74 & 0.06 & 0.54 & 0.83\\
 $\sum_i\sqrt{G_{ii}}$ & 1.00 & 0.84 & 0.92 & 1.00 & 1.00 & 1.00\\
 $\lambda_{\max}$ & 0.37 & 0.29 & 0.45 & 0.00 & 0.06 & 0.32\\
 \midrule
@@ -217,7 +225,7 @@ Filter-norm.\ (part.) & 0.14 & 0.08 & 0.06 & 0.47 & 0.42 & 0.20\\
 Original metric $\Delta L/L$ (test) & $0.034\pm0.002$ & $0.012\pm0.003$ & $0.040\pm0.008$ & $0.014\pm0.010$\\
 Training loss at measurement & $1.42\pm0.05$ & $1.29\pm0.02$ & $0.136\pm0.005$ & $0.008\pm0.004$\\
 Test accuracy & $0.475\pm0.016$ & $0.496\pm0.005$ & $0.957\pm0.001$ & $0.978\pm0.002$\\
-Hessian trace $\tr G$ & $1004\pm31$ & $395\pm19$ & $96.2\pm1.2$ & $9.7\pm3.1$\\
+Hessian trace ($=\tr G$) & $1004\pm31$ & $395\pm19$ & $96.2\pm1.2$ & $9.7\pm3.1$\\
 \quad minimum sharpness $\MS_1$ (function) & $353\pm18$ & $320\pm11$ & $72.0\pm1.1$ & $8.0\pm2.4$\\
 \quad orbit excess $E$ (coordinates) & $2.85$ & $1.23$ & $1.34$ & $1.21$\\
 Filter-normalized average, scale $0.1$ ($\times10^{4}$) & $78\pm34$ & $207\pm36$ & $41\pm9$ & $17\pm7$\\

@@ -124,7 +124,7 @@ All measures use mean cross-entropy on a fixed evaluation subset of 4096 trainin
 \item \emph{Isotropic average}: $\mathbb{E}L(w+\sigma\varepsilon)-L(w)$, $\sigma\in\{0.003,0.01,0.03\}$, 16 draws; we report $\sigma=0.01$.
 \item \emph{Filter-normalized average} \citep{li2018visualizing}: each output unit's (or filter's) row of a Gaussian direction is rescaled to the norm of the corresponding weight row; biases are not perturbed; scale $\in\{0.01,0.03,0.1\}$, 16 draws; we report $0.03$. Invariant to scaling a row, not to neuron rescaling (\S\ref{sec:protocol}).
 \item \emph{Multiplicative average}: $\delta=\sigma|w|\odot\varepsilon$, $\sigma\in\{0.01,0.03,0.1\}$; we report $0.03$.
-\item \emph{Hessian trace}: Hutchinson with 20 Rademacher probes. $\tr G$: exact, from the exact diagonal Gauss--Newton matrix (which matches the Hessian trace closely at the loss levels studied).
+\item \emph{Hessian trace}: Hutchinson with 20 Rademacher probes. $\tr G$: exact, from the exact diagonal Gauss--Newton matrix; for the MLPs and the CNN it equals the Hessian trace (Lemma~\ref{lem:diag}), of which the Hutchinson value is a stochastic estimate.
 \item $\lambda_{\max}$: Lanczos (\texttt{scipy eigsh}, tolerance $10^{-3}$) on Hessian--vector products.
 \item \emph{SAM worst-case}: $\max_{\|\delta\|_2\le0.05}L(w+\delta)-L(w)$ by 10 steps of normalized projected gradient ascent with step $0.4\rho$. \emph{ASAM worst-case} \citep{kwon2021asam}: the same with $\|\delta/|w|\|_2\le0.5$.
 \item $\MS_p$: coordinate descent until the relative change is below $10^{-10}$. The minimum-norm point: alternating per-unit balancing until $\max_j|\log c_j|<10^{-7}$.
