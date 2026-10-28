@@ -110,7 +110,7 @@ Every conv in ResNet-18 is followed by BatchNorm, so the measures come in three 
    raw tr H = ntrace × (tr H / ntrace) exactly, plus filter-normalized sharpness;
 3. invariant to every per-weight rescaling: Σ w²H_ii, multiplicative sharpness, ASAM.
 
-All are measured with batch statistics on 1024 clean training images in chunks of 128, in float32.
+All are measured with batch statistics on 512 clean training images in chunks of 128, in float32 (Hutchinson traces with 12 probes, Lanczos with 30 steps).
 
 Checks:
 - `python scripts/resnet_cifar10.py --selftest` verifies every invariance exactly (float64, BN ε → 0), the
