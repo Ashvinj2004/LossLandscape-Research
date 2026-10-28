@@ -8,3 +8,9 @@ LossLandscapeProject/research/.cache/
 LossLandscapeProject/research/checkpoints/
 # local app configuration
 LossLandscapeProject/.claude/
+# LaTeX build output in paper/icml (the PDF is kept)
+LossLandscapeProject/research/paper/icml/*.aux
+LossLandscapeProject/research/paper/icml/*.log
+LossLandscapeProject/research/paper/icml/*.out
+LossLandscapeProject/research/paper/icml/*.bbl
+LossLandscapeProject/research/paper/icml/*.blg
