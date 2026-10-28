@@ -2,7 +2,7 @@
 
 **Optimizer-induced symmetry drift biases sharpness comparisons between Adam and SGD.**
 
-Ashvin J — School of Computer Science and Engineering, VIT-AP University
+Ashvin Jaison Olickal — School of Computer Science and Engineering, VIT-AP University
 
 This repository holds the paper, all code, and the raw result of every training run behind it
 (about 640 networks, all trained on CPUs).
@@ -120,10 +120,10 @@ paper says so where relevant.
 ## Citation
 
 ```bibtex
-@misc{ashvin2026flat,
+@misc{olickal2026flat,
   title  = {Flat in the Wrong Coordinates: Optimizer-Induced Symmetry Drift Biases
             Sharpness Comparisons Between Adam and SGD},
-  author = {Ashvin J},
+  author = {Ashvin Jaison Olickal},
   year   = {2026},
   note   = {https://github.com/Ashvinj2004/LossLandscape-Research}
 }
