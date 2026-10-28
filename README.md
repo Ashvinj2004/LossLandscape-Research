@@ -35,7 +35,7 @@ raw trace  =  minimum sharpness (function only)  ×  orbit excess (coordinates o
 
 The key observation is that **the optimizer chooses the coordinates**:
 
-- **SGD cannot move between equivalent coordinates.** Its first-order drift along these symmetries
+- **SGD cannot move between equivalent coordinates at first order.** Without weight decay, its first-order drift along these symmetries
   is exactly zero (proof in the paper; measured below 3×10⁻⁷).
 - **Adam can, and does.** It drifts at a rate proportional to η·√fan-in and settles near the
   coordinates where its trace is smallest. RMSprop and sign descent behave the same way.
