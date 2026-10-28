@@ -6,8 +6,8 @@ __pycache__/
 LossLandscapeProject/research/data/
 LossLandscapeProject/research/.cache/
 LossLandscapeProject/research/checkpoints/
-# local app configuration
-LossLandscapeProject/.claude/
+# local tool configuration folders
+LossLandscapeProject/.*/
 # LaTeX build output in paper/icml (the PDF is kept)
 LossLandscapeProject/research/paper/icml/*.aux
 LossLandscapeProject/research/paper/icml/*.log
