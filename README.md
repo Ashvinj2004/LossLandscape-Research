@@ -68,8 +68,10 @@ contain an optimizer-dependent bias with a known mechanism, large enough to chan
 1. Compare optimizers at matched training loss.
 2. Report a rescaling-invariant measure (minimum sharpness, multiplicative or ASAM sharpness, or
    Σ w²·H_ii), or at least the orbit excess.
-3. Don't rely on min-norm canonicalization or filter normalization alone. Filter normalization is
-   invariant to row scaling only, and a neuron rescaling changes it by up to 19× in our tests.
+3. Say which invariant you use: invariants can disagree (the trace at the minimum-norm point and minimum
+   sharpness evaluate curvature at different points of the same orbit). Don't rely on filter
+   normalization: it is invariant to row scaling only, and a neuron rescaling changes it by up to 19×
+   in our tests.
 
 ## Repository layout
 
