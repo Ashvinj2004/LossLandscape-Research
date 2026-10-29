@@ -1,0 +1,3 @@
+24 runs
+[1/24] mnist_sgd_lr0.12_ln0.2_s2 ep600 loss 0.244 excess1 1.15 excess_half 2.09 frozen sum dlog p=1 -0.409 p=1/2 -0.288 t=99s
+[2/24] mnist_adam_lr0.0006_ln0.2_s2 ep600 loss 0.225 excess1 1.54 excess_half 1.23 frozen sum dlog p=1 +0.206 p=1/2 -0.445 t=144s
