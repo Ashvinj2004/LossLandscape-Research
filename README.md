@@ -5,7 +5,7 @@
 Ashvin Jaison Olickal — School of Computer Science and Engineering, VIT-AP University
 
 This repository holds the paper, all code, and the raw result of every training run behind it
-(about 640 networks, all trained on CPUs).
+(about 660 networks: about 640 small ones trained on CPUs, and 24 ResNet-18s trained on GPUs).
 
 - Paper: [`LossLandscapeProject/research/paper/main.pdf`](LossLandscapeProject/research/paper/main.pdf)
   (LaTeX source: `main.tex`, `refs.bib`)
@@ -56,11 +56,12 @@ optimizer, and that factor is as large as the effects being measured.
 | The excess is set by training dynamics, not by the starting point: the same function started at three orbit points ends at nearly the same excess, and Adam ends below SGD from every start | §5.5; 48 runs |
 | Moving SGD to Adam's preferred coordinates (symmetry teleportation) **destabilizes** it: 10/16 teleported runs diverge, against 0/16 without teleports, because each teleport raises λ_max toward 2/η | §5.4, 32 runs |
 | The coordinate factor does **not** grow with depth (×1.4–1.8 at 1–8 hidden layers), while Adam's real sharpness does: the bias reverses the ranking in shallow MLPs and masks it in deep ones | §5.9, 36 runs |
-| With **BatchNorm** the bias points the other way: raw measures track learning-rate-dependent weight norms and rate Adam sharper; per-weight-invariant measures rate it flatter in all 8 learning-rate pairings | §5.10, 24 runs |
+| With **BatchNorm** raw measures track weight norms set by the learning rate and weight decay, so their verdict depends on the hyperparameter pairing. In a BatchNorm MLP, per-weight-invariant measures rate Adam flatter in all 8 learning-rate pairings | §5.10, 24 runs |
+| **ResNet-18 on full CIFAR-10**: the raw trace again follows filter norms (Adam flatter in 22 of 54 comparisons, all or nothing per pairing), while invariant measures rate Adam sharper in 53–54 of 54. In a standard recipe (93–95% accuracy) the raw trace rates AdamW 1.3–4.9× flatter than SGD+M, mostly through its larger filters; invariant measures do not confirm it | §5.10, 24 GPU runs |
 | The original "Adam is flatter" result replicates, but it is the coordinate factor on CIFAR-10 and a training-loss mismatch on MNIST | 20 runs, 5 seeds |
 
 We do **not** claim that Adam's minima are always sharper: invariant measures rate Adam sharper on
-plain MLPs and the CNN, but flatter with BatchNorm. The claim is that raw-coordinate comparisons
+plain MLPs, the CNN and ResNet-18, but flatter in the BatchNorm MLP. The claim is that raw-coordinate comparisons
 contain an optimizer-dependent bias with a known mechanism, large enough to change conclusions.
 
 **Recommendations:**

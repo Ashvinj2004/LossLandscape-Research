@@ -132,7 +132,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   <section class="plate" aria-labelledby="readings-h">
     <div class="plate-head"><h2 id="readings-h">Main numbers</h2><span class="label">CIFAR-10 MLP unless noted</span></div>
     <div class="readings">
-      <div class="reading"><span class="label">Networks trained</span><span class="big num">624</span><p>CPU runs over 13 experiments. The 144 main runs were measured with 17 sharpness measures at five matched training losses.</p></div>
+      <div class="reading"><span class="label">Networks trained</span><span class="big num">660</span><p>636 CPU runs over 14 experiments and 24 GPU runs of ResNet-18. The 144 main runs were measured with 17 sharpness measures at five matched training losses.</p></div>
       <div class="reading"><span class="label">Coordinate factor</span><span class="big num">&times;2.0</span><p>Part of the Adam/SGD Hessian-trace ratio due to weight scaling alone: &minus;1.02 bits, 95% CI [&minus;1.16, &minus;0.87].</p></div>
       <div class="reading"><span class="label">Orbit excess</span><span class="big num"><span class="adam">1.2</span> <small>vs</small> <span class="sgd">1.8–3.4</span></span><p>Raw trace divided by its minimum over equivalent weights: Adam vs SGD, SGD+momentum and SAM (medians).</p></div>
       <div class="reading"><span class="label">P(Adam rated flatter)</span><span class="big num">0.64 <small>&rarr;</small> 0.01</span><p>At train loss 0.1, raw Hessian trace vs minimum sharpness.</p></div>
@@ -372,7 +372,26 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <li>Invariant measures (&Sigma;w²H<sub>ii</sub>, ASAM, multiplicative) do not follow the norm and rate Adam flatter in every pairing (70/72 and 72/72 pairs).</li>
           <li>Weight decay at these strengths has little effect before loss 0.1 at matched learning rate.</li>
         </ul>
-        <div class="callout warn"><b>Direction</b>The bias favours Adam on plain MLPs and SGD with BatchNorm. Invariant measures rate Adam sharper on the plain MLP and the CNN but flatter here, so the paper makes no general claim about which optimizer is flatter.</div>
+        <div class="callout warn"><b>Direction</b>Invariant measures rate Adam sharper on the plain MLP, the CNN and ResNet-18, but flatter in this BatchNorm MLP, so the paper makes no general claim about which optimizer is flatter.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="resnet" class="plate">
+    <div class="plate-head"><h2>ResNet-18 on full CIFAR-10</h2><span class="label">24 GPU runs</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="../figures/fig11_resnet.png" alt="Raw Hessian trace and the per-weight-invariant trace against the conv filter norm for ResNet-18 runs.">
+        <figcaption>Training loss 0.01, one point per run. Filled: no augmentation or weight decay. Hollow: standard recipe.</figcaption>
+      </figure>
+      <div class="notes">
+        <p>ResNet-18 has BatchNorm after every convolution, so this tests the BatchNorm regime, not the ReLU-orbit decomposition.</p>
+        <ul>
+          <li>Without augmentation the raw trace follows the filter norms (Spearman &minus;0.62 to &minus;0.96), and its verdict is all or nothing per learning-rate pairing: Adam flatter in 22 of 54 comparisons.</li>
+          <li>&Sigma;w&sup2;H<sub>ii</sub> and ASAM rate Adam sharper in 53 and 54 of 54, about 2.1&ndash;2.9&times; against SGD. This is the opposite direction from the BatchNorm MLP.</li>
+          <li>With the standard recipe (93&ndash;95% test accuracy) the raw trace rates AdamW 1.3&ndash;4.9&times; flatter than SGD+M in every seed, mostly through its larger filters; the invariant measures do not confirm it.</li>
+          <li>Adam with coupled L2 weight decay collapses many deep filters to zero and is left out of the comparison.</li>
+        </ul>
       </div>
     </div>
   </section>
@@ -396,6 +415,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td><code>coordinate_memory</code></td><td class="r">48</td><td>Same function started at three orbit points</td></tr>
           <tr><td><code>depth_cifar10</code></td><td class="r">36</td><td>MLPs with 1, 2, 4, 8 hidden layers</td></tr>
           <tr><td><code>bn_cifar10</code></td><td class="r">24</td><td>BatchNorm MLP; SGD, SGD+M, Adam, SGD+M with weight decay, AdamW</td></tr>
+          <tr><td><code>adam_orbit</code></td><td class="r">12</td><td>Adam held at the minimum-trace or minimum-norm orbit point</td></tr>
+          <tr><td><code>resnet18_noaug</code>, <code>resnet18_aug</code></td><td class="r">24</td><td>ResNet-18 on full CIFAR-10 (GPU), without and with augmentation and weight decay</td></tr>
         </tbody>
       </table>
     </div>

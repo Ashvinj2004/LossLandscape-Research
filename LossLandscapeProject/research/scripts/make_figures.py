@@ -479,6 +479,50 @@ def fig_bn(target=0.1, name="fig8_bn"):
     save(fig, name)
 
 
+# ---------------------------------------------------------------- Figure 11: ResNet-18 on full CIFAR-10
+def fig_resnet(target=0.01, name="fig11_resnet"):
+    """Raw and per-weight-invariant trace against the conv filter norm. Adam with coupled L2 weight decay
+    is left out: it collapses many filters to zero norm, so its curvature depends on BatchNorm's epsilon."""
+    rows = []
+    for sweep, filled in (("resnet18_noaug", True), ("resnet18_aug", False)):
+        for f in glob.glob(os.path.join(RES, sweep, "*.json")):
+            r = json.load(open(f))
+            c = r["cfg"]
+            if c["opt"] == "adam" and c.get("wd", 0) > 0:
+                continue
+            for k in r["ckpts"]:
+                if k["target"] == target:
+                    rows.append((c["opt"], filled, k["conv_filter_norm_gmean"], k["hess_trace"], k["wtrace"]))
+    if not rows:
+        return
+    panels = [(3, "(a) Raw Hessian trace", "tr H"), (4, "(b) Invariant: Σ w² H_ii", "Σ w² H_ii")]
+    fig, axs = plt.subplots(1, 2, figsize=(6.4, 2.5))
+    for ax, (j, title, ylab) in zip(axs, panels):
+        seen = set()
+        for opt, filled, x, *ys in rows:
+            base = "adam" if opt == "adamw" else opt
+            lab, c, mk, _ = STYLE[base]
+            lab = lab + ("W" if opt == "adamw" else "") + ("" if filled else " (aug + wd)")
+            ax.plot(x, ys[j - 3], ls="none", marker=mk, ms=6,
+                    color=c if filled else "white", markeredgecolor=c if not filled else "white",
+                    markeredgewidth=1.2 if not filled else 0.6, label=None if lab in seen else lab)
+            seen.add(lab)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        fmt = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
+        ax.set_xticks([0.4, 0.6, 1, 2])
+        ax.xaxis.set_major_formatter(fmt)
+        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ax.yaxis.set_major_formatter(fmt)
+        ax.yaxis.set_minor_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}" if f"{v:g}"[0] in "25" else ""))
+        ax.set_xlabel("conv filter norm")
+        ax.set_ylabel(ylab)
+        ax.set_title(title, loc="left")
+    axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handletextpad=0.3)
+    fig.tight_layout(w_pad=1.5)
+    save(fig, name)
+
+
 # ---------------------------------------------------------------- Figure 9: coordinate memory
 def fig_memory(name="fig9_memory"):
     files = glob.glob(os.path.join(RES, "coordinate_memory", "*.json"))
@@ -557,3 +601,4 @@ if __name__ == "__main__":
     fig_bn()
     fig_memory()
     fig_depth()
+    fig_resnet()

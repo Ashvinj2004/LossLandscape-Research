@@ -140,7 +140,7 @@ Runs resume after an interruption with bit-identical results. Analyse returned r
 | `depth_cifar10` | 36 | MLPs with 1-8 hidden layers | §5.9 |
 | `bn_cifar10` | 24 | BatchNorm MLP, weight decay, AdamW | §5.10 |
 | `adam_orbit` | 12 | Adam held at the min-trace vs the min-norm orbit point | §5.3 |
-| `resnet18_noaug`, `resnet18_aug` | 15 + 9 | ResNet-18 on full CIFAR-10 (GPU; see below) | pending |
+| `resnet18_noaug`, `resnet18_aug` | 15 + 9 | ResNet-18 on full CIFAR-10 (GPU; see below) | §5.10 |
 
 Each run's JSON holds its configuration, training curve, and every measurement at every
 loss-matched checkpoint. `*_summary.json` files hold the numbers quoted in the paper.
