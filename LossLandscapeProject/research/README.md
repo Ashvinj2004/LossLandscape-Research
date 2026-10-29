@@ -81,6 +81,8 @@ python scripts/sweep.py bn_cifar10           # BatchNorm MLP + weight decay
 python scripts/analyze_bn.py --json results/bn_cifar10_summary.json
 python scripts/orbit_dynamics.py
 python scripts/coordinate_memory.py
+python scripts/label_noise_seeds.py         # more label-noise seeds + frozen-curvature test
+python scripts/analyze_label_noise.py --json results/label_noise_summary.json   # block-level tests
 python scripts/analyze_coordinate_memory.py --json results/coordinate_memory_summary.json
 python scripts/sweep.py depth_cifar10        # depth 1-8 MLPs
 python scripts/analyze_depth.py --json results/depth_cifar10_summary.json
@@ -134,6 +136,7 @@ Runs resume after an interruption with bit-identical results. Analyse returned r
 | `func_adamq` | 36 | Adam-Q controls (every 50 steps, one layer, no moment transform) | §5.3 |
 | `func_teleport` | 32 | teleporting SGD / SGD+M to the minimum-trace point | §5.4 |
 | `orbit_dynamics` | 32 | 400-600 epochs with / without label noise | §5.5 |
+| `label_noise_seeds` | 24 | six more label-noise seeds per dataset; frozen-curvature test of the orbit motion | §5.5 |
 | `coordinate_memory` | 48 | same function started at three orbit points | §5.5 |
 | `orig_replication` | 20 | the original study's protocol, 5 seeds | §5.7 |
 | `cnn_cifar10` | 18 | CNN audit (channel rescaling) | §5.8 |

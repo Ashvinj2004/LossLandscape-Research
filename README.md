@@ -5,7 +5,7 @@
 Ashvin Jaison Olickal — School of Computer Science and Engineering, VIT-AP University
 
 This repository holds the paper, all code, and the raw result of every training run behind it
-(about 660 networks: about 640 small ones trained on CPUs, and 24 ResNet-18s trained on GPUs).
+(about 680 networks: 660 small ones trained on CPUs, and 24 ResNet-18s trained on GPUs).
 
 - Paper: [`LossLandscapeProject/research/paper/main.pdf`](LossLandscapeProject/research/paper/main.pdf)
   (LaTeX source: `main.tex`, `refs.bib`)
@@ -52,7 +52,7 @@ optimizer, and that factor is as large as the effects being measured.
 | On MNIST it **flips** the raw ranking during training; on a CNN it **masks** a 2× real difference | §5.2, §5.8 |
 | **Causal test.** Removing Adam's drift after every step (Adam-Q, function unchanged) raises raw trace ×1.91 and leaves minimum sharpness unchanged (×0.98) | 36 + 36 runs |
 | The bias hurts **cross-optimizer** sharpness–generalization correlations (Kendall τ 0.38 → 0.61 when it is removed) and leaves within-optimizer ones intact | §5.6 |
-| **Two phases.** A fast first-order drift (Adam reaches excess ≈1.1 within 5 epochs), then a slow noise-driven drift. With label noise, SGD moves toward minimum trace and Adam toward minimum Σ√G_ii, the destinations predicted by implicit-regularization theory, in **20/20 runs each** | §5.1, §5.5; 80 runs |
+| **Two phases.** A fast first-order drift (Adam reaches excess ≈1.1 within 5 epochs), then a slow noise-driven drift. With label noise, SGD moves toward minimum trace and Adam toward minimum Σ√G_ii, the destinations predicted by implicit-regularization theory, in **all 32 runs each, from 16 independent initializations** (p = 3×10⁻⁵), and also with the curvature held fixed | §5.1, §5.5; 104 runs |
 | The excess is set by training dynamics, not by the starting point: the same function started at three orbit points ends at nearly the same excess, and Adam ends below SGD from every start | §5.5; 48 runs |
 | Moving SGD to Adam's preferred coordinates (symmetry teleportation) **destabilizes** it: 10/16 teleported runs diverge, against 0/16 without teleports, because each teleport raises λ_max toward 2/η | §5.4, 32 runs |
 | The coordinate factor does **not** grow with depth (×1.4–1.8 at 1–8 hidden layers), while Adam's real sharpness does: the bias reverses the ranking in shallow MLPs and masks it in deep ones | §5.9, 36 runs |
