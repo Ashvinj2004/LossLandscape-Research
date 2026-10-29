@@ -1,3 +1,13 @@
 24 runs
 [1/24] mnist_sgd_lr0.12_ln0.2_s2 ep600 loss 0.244 excess1 1.15 excess_half 2.09 frozen sum dlog p=1 -0.409 p=1/2 -0.288 t=99s
 [2/24] mnist_adam_lr0.0006_ln0.2_s2 ep600 loss 0.225 excess1 1.54 excess_half 1.23 frozen sum dlog p=1 +0.206 p=1/2 -0.445 t=144s
+[3/24] mnist_sgd_lr0.12_ln0.2_s3 ep600 loss 0.190 excess1 1.16 excess_half 2.07 frozen sum dlog p=1 -0.385 p=1/2 -0.275 t=100s
+[4/24] mnist_adam_lr0.0006_ln0.2_s3 ep600 loss 0.214 excess1 1.52 excess_half 1.18 frozen sum dlog p=1 +0.229 p=1/2 -0.440 t=135s
+[5/24] mnist_sgd_lr0.12_ln0.2_s4 ep600 loss 0.185 excess1 1.16 excess_half 2.11 frozen sum dlog p=1 -0.390 p=1/2 -0.276 t=91s
+[6/24] mnist_sgd_lr0.12_ln0.2_s5 ep600 loss 0.196 excess1 1.16 excess_half 2.08 frozen sum dlog p=1 -0.399 p=1/2 -0.280 t=89s
+[7/24] mnist_adam_lr0.0006_ln0.2_s4 ep600 loss 0.191 excess1 1.61 excess_half 1.23 frozen sum dlog p=1 +0.170 p=1/2 -0.471 t=135s
+[8/24] mnist_sgd_lr0.12_ln0.2_s6 ep600 loss 0.208 excess1 1.16 excess_half 2.06 frozen sum dlog p=1 -0.392 p=1/2 -0.278 t=86s
+[9/24] mnist_adam_lr0.0006_ln0.2_s5 ep600 loss 0.216 excess1 1.51 excess_half 1.18 frozen sum dlog p=1 +0.183 p=1/2 -0.441 t=131s
+[10/24] mnist_sgd_lr0.12_ln0.2_s7 ep600 loss 0.211 excess1 1.16 excess_half 2.08 frozen sum dlog p=1 -0.390 p=1/2 -0.277 t=82s
+[11/24] mnist_adam_lr0.0006_ln0.2_s6 ep600 loss 0.208 excess1 1.48 excess_half 1.21 frozen sum dlog p=1 +0.193 p=1/2 -0.447 t=128s
+[12/24] mnist_adam_lr0.0006_ln0.2_s7 ep600 loss 0.200 excess1 1.48 excess_half 1.24 frozen sum dlog p=1 +0.120 p=1/2 -0.458 t=137s
