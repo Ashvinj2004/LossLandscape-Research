@@ -61,6 +61,8 @@ Every figure and table can be regenerated from the stored JSONs without retraini
 python scripts/test_ggn.py             # diag-GGN matches brute force
 python scripts/test_rescale.py         # function preserved, transport exact, orbit-min is a minimum
 python scripts/test_invariance.py      # which perturbation measures are invariant to which rescalings
+python scripts/test_hessian_diag.py    # diag(H) = diag(G) for MLP/CNN, not with BatchNorm
+python scripts/test_resnet_bn_eps.py   # how exact the BatchNorm invariances are in ResNet-18 (epsilon)
 python scripts/sweep.py calib_cifar10  # learning-rate calibration (training only)
 python scripts/sweep.py main_cifar10_mlp
 python scripts/sweep.py main_mnist_mlp
@@ -80,6 +82,8 @@ python scripts/sweep.py bn_cifar10           # BatchNorm MLP + weight decay
 python scripts/analyze_bn.py --json results/bn_cifar10_summary.json
 python scripts/orbit_dynamics.py
 python scripts/coordinate_memory.py
+python scripts/label_noise_seeds.py         # more label-noise seeds + frozen-curvature test
+python scripts/analyze_label_noise.py --json results/label_noise_summary.json   # block-level tests
 python scripts/analyze_coordinate_memory.py --json results/coordinate_memory_summary.json
 python scripts/sweep.py depth_cifar10        # depth 1-8 MLPs
 python scripts/analyze_depth.py --json results/depth_cifar10_summary.json
@@ -133,13 +137,14 @@ Runs resume after an interruption with bit-identical results. Analyse returned r
 | `func_adamq` | 36 | Adam-Q controls (every 50 steps, one layer, no moment transform) | §5.3 |
 | `func_teleport` | 32 | teleporting SGD / SGD+M to the minimum-trace point | §5.4 |
 | `orbit_dynamics` | 32 | 400-600 epochs with / without label noise | §5.5 |
+| `label_noise_seeds` | 24 | six more label-noise seeds per dataset; frozen-curvature test of the orbit motion | §5.5 |
 | `coordinate_memory` | 48 | same function started at three orbit points | §5.5 |
 | `orig_replication` | 20 | the original study's protocol, 5 seeds | §5.7 |
 | `cnn_cifar10` | 18 | CNN audit (channel rescaling) | §5.8 |
 | `depth_cifar10` | 36 | MLPs with 1-8 hidden layers | §5.9 |
 | `bn_cifar10` | 24 | BatchNorm MLP, weight decay, AdamW | §5.10 |
 | `adam_orbit` | 12 | Adam held at the min-trace vs the min-norm orbit point | §5.3 |
-| `resnet18_noaug`, `resnet18_aug` | 15 + 9 | ResNet-18 on full CIFAR-10 (GPU; see below) | pending |
+| `resnet18_noaug`, `resnet18_aug` | 15 + 9 | ResNet-18 on full CIFAR-10 (GPU; see below) | §5.10 |
 
 Each run's JSON holds its configuration, training curve, and every measurement at every
 loss-matched checkpoint. `*_summary.json` files hold the numbers quoted in the paper.
@@ -157,3 +162,5 @@ loss-matched checkpoint. `*_summary.json` files hold the numbers quoted in the p
 | SGD first-order drift (must be exactly 0) | < 3e-7 (float32 round-off) |
 | multiplicative, ASAM, Σ w²H_ii under random neuron / BN rescalings (`test_invariance.py`) | unchanged (< 2e-4 relative) |
 | filter-normalized sharpness under the same rescalings | changes ×9.5 (neuron), ×19 (BN affine): only row-scale invariant |
+| diag(H) vs diag(G), exact, float64 (`test_hessian_diag.py`) | equal to 5e-16 for MLP and CNN (so tr H = tr G); differ with BatchNorm |
+| ResNet-18 BN invariances with BatchNorm's default ε = 1e-5 (`test_resnet_bn_eps.py`) | random filter rescaling (0.3–3×) changes the unit-filter trace by ≤ 0.3%, Σ w²H_ii by ≤ 0.5%, raw tr H by 120–160% |

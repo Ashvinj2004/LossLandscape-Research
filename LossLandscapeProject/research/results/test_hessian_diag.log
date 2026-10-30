@@ -1,0 +1,4 @@
+MLP          670 params  tr H 2.080955  tr G 2.080955  max |diag H - diag G| / max |diag H| = 4.6e-16
+CNN         5922 params  tr H 4.106929  tr G 4.106929  max |diag H - diag G| / max |diag H| = 2.7e-16
+BN-MLP       698 params  tr H 6.430418  tr G 28.783905  max |diag H - diag G| / max |diag H| = 9.4e-01
+MLP, CNN: diag(H) = diag(G) exactly | BN-MLP: diag(H) != diag(G)

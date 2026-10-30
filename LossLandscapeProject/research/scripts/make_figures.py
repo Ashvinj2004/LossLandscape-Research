@@ -126,8 +126,8 @@ def fig_flip(sweeps, target=0.1, other="sgd", name="fig1_flip"):
             fun.append(a.l_fun.mean() - x.l_fun.mean())
             coord.append(a.l_coord.mean() - x.l_coord.mean())
             raw.append(a.l_raw.mean() - x.l_raw.mean())
-        bx.bar(xs - width / 2, fun, width=width, color="#1c5cab", label="function (minimum sharpness)" if k == 0 else None)
-        bx.bar(xs + width / 2, coord, width=width, color="#86b6ef", label="coordinates (orbit excess)" if k == 0 else None)
+        bx.bar(xs - width / 2, fun, width=width, color="#1c5cab", label="orbit minimum (MS₁)" if k == 0 else None)
+        bx.bar(xs + width / 2, coord, width=width, color="#86b6ef", label="orbit excess (coordinates)" if k == 0 else None)
         bx.plot(xs, raw, ls="none", marker="D", ms=5, color=INK, markeredgecolor="white", markeredgewidth=0.6,
                 label="raw trace = sum" if k == 0 else None)
         bx.text(xs.mean(), -1.22, DS_LABEL.get(s_, s_), ha="center", fontsize=6.8, color=INK2)
@@ -141,7 +141,7 @@ def fig_flip(sweeps, target=0.1, other="sgd", name="fig1_flip"):
     bx.set_ylabel(f"log₂(Adam / {STYLE[other][0]}) of Hessian trace\n← Adam flatter      Adam sharper →", fontsize=7)
     bx.legend(loc="upper right", fontsize=6.2, handlelength=1.2)
     bx.grid(axis="x", visible=False)
-    bx.set_title("(b) Raw trace = function × coordinates (exact)", loc="left")
+    bx.set_title("(b) Raw trace = orbit minimum × orbit excess", loc="left")
     fig.tight_layout(w_pad=1.5)
     save(fig, name)
 
@@ -422,8 +422,8 @@ def fig_cnn(name="fig6_cnn"):
             fun.append(a.l_fun.mean() - x.l_fun.mean())
             coord.append(a.l_coord.mean() - x.l_coord.mean())
             raw.append(a.l_raw.mean() - x.l_raw.mean())
-        bx.bar(xs - width / 2, fun, width=width, color="#1c5cab", label="function (minimum sharpness)" if k == 0 else None)
-        bx.bar(xs + width / 2, coord, width=width, color="#86b6ef", label="coordinates (orbit excess)" if k == 0 else None)
+        bx.bar(xs - width / 2, fun, width=width, color="#1c5cab", label="orbit minimum (MS₁)" if k == 0 else None)
+        bx.bar(xs + width / 2, coord, width=width, color="#86b6ef", label="orbit excess (coordinates)" if k == 0 else None)
         bx.plot(xs, raw, ls="none", marker="D", ms=5, color=INK, markeredgecolor="white", markeredgewidth=0.6,
                 label="raw trace = sum" if k == 0 else None)
         bx.text(xs.mean(), -1.25, f"Adam vs {STYLE[other][0]}", ha="center", fontsize=6.8, color=INK2)
@@ -437,7 +437,7 @@ def fig_cnn(name="fig6_cnn"):
     bx.set_ylabel("log₂(Adam / X) of Hessian trace\n← Adam flatter      Adam sharper →", fontsize=7)
     bx.legend(loc="upper right", fontsize=6.2, handlelength=1.2)
     bx.grid(axis="x", visible=False)
-    bx.set_title("(b) Raw trace = function × coordinates", loc="left")
+    bx.set_title("(b) Raw trace = orbit minimum × orbit excess", loc="left")
     fig.tight_layout(w_pad=1.5)
     save(fig, name)
 
@@ -472,6 +472,50 @@ def fig_bn(target=0.1, name="fig8_bn"):
         ax.yaxis.set_minor_formatter(fmt if col == "wtrace" else
                                      matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}" if f"{v:g}"[0] in "1235" else ""))
         ax.set_xlabel("median first-layer pre-BN row norm")
+        ax.set_ylabel(ylab)
+        ax.set_title(title, loc="left")
+    axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handletextpad=0.3)
+    fig.tight_layout(w_pad=1.5)
+    save(fig, name)
+
+
+# ---------------------------------------------------------------- Figure 11: ResNet-18 on full CIFAR-10
+def fig_resnet(target=0.01, name="fig11_resnet"):
+    """Raw and per-weight-invariant trace against the conv filter norm. Adam with coupled L2 weight decay
+    is left out: it collapses many filters to zero norm, so its curvature depends on BatchNorm's epsilon."""
+    rows = []
+    for sweep, filled in (("resnet18_noaug", True), ("resnet18_aug", False)):
+        for f in glob.glob(os.path.join(RES, sweep, "*.json")):
+            r = json.load(open(f))
+            c = r["cfg"]
+            if c["opt"] == "adam" and c.get("wd", 0) > 0:
+                continue
+            for k in r["ckpts"]:
+                if k["target"] == target:
+                    rows.append((c["opt"], filled, k["conv_filter_norm_gmean"], k["hess_trace"], k["wtrace"]))
+    if not rows:
+        return
+    panels = [(3, "(a) Raw Hessian trace", "tr H"), (4, "(b) Invariant: Σ w² H_ii", "Σ w² H_ii")]
+    fig, axs = plt.subplots(1, 2, figsize=(6.4, 2.5))
+    for ax, (j, title, ylab) in zip(axs, panels):
+        seen = set()
+        for opt, filled, x, *ys in rows:
+            base = "adam" if opt == "adamw" else opt
+            lab, c, mk, _ = STYLE[base]
+            lab = lab + ("W" if opt == "adamw" else "") + ("" if filled else " (aug + wd)")
+            ax.plot(x, ys[j - 3], ls="none", marker=mk, ms=6,
+                    color=c if filled else "white", markeredgecolor=c if not filled else "white",
+                    markeredgewidth=1.2 if not filled else 0.6, label=None if lab in seen else lab)
+            seen.add(lab)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        fmt = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
+        ax.set_xticks([0.4, 0.6, 1, 2])
+        ax.xaxis.set_major_formatter(fmt)
+        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ax.yaxis.set_major_formatter(fmt)
+        ax.yaxis.set_minor_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}" if f"{v:g}"[0] in "25" else ""))
+        ax.set_xlabel("conv filter norm")
         ax.set_ylabel(ylab)
         ax.set_title(title, loc="left")
     axs[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handletextpad=0.3)
@@ -531,8 +575,8 @@ def fig_depth(name="fig10_depth"):
                 A, B = g[g.opt == "adam"], g[g.opt == other]
                 fun.append(A.l_fun.mean() - B.l_fun.mean())
                 coord.append(A.l_coord.mean() - B.l_coord.mean())
-            ax.plot(depths, fun, marker=mk, color="#1c5cab", label=f"function, loss {tgt:g}")
-            ax.plot(depths, coord, marker=mk, color="#86b6ef", ls="--", label=f"coordinates, loss {tgt:g}")
+            ax.plot(depths, fun, marker=mk, color="#1c5cab", label=f"orbit minimum, loss {tgt:g}")
+            ax.plot(depths, coord, marker=mk, color="#86b6ef", ls="--", label=f"orbit excess, loss {tgt:g}")
             ax.plot(depths, np.add(fun, coord), marker=mk, color=INK, lw=0.9, ls=":", label=f"raw trace, loss {tgt:g}")
         ax.axhline(0, color="#c3c2b7", lw=0.8)
         ax.set_xscale("log", base=2)
@@ -557,3 +601,4 @@ if __name__ == "__main__":
     fig_bn()
     fig_memory()
     fig_depth()
+    fig_resnet()

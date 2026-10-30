@@ -1,0 +1,80 @@
+{
+ "adam": {
+  "runs": 32,
+  "runs_in_predicted_direction": 32,
+  "blocks": 16,
+  "blocks_in_predicted_direction": 16,
+  "sign_test_p_blocks": 3.0517578125e-05,
+  "mean_block_stat": -0.3632522235186756,
+  "blocks_per_dataset": {
+   "mnist": 8,
+   "cifar10": 8
+  },
+  "frozen": {
+   "runs": 12,
+   "in_predicted_direction": 12,
+   "sign_test_p": 0.00048828125,
+   "mean_d1": 0.1576492190372898,
+   "mean_dhalf": -0.45721471610543163,
+   "mean_diff": 0.6148639351427215,
+   "max_q_residual": 5.128140969645756e-07,
+   "per_dataset": {
+    "mnist": [
+     0.6412,
+     0.6245,
+     0.6506,
+     0.6692,
+     0.5775,
+     0.64
+    ],
+    "cifar10": [
+     0.6224,
+     0.6043,
+     0.6054,
+     0.5648,
+     0.5895,
+     0.5891
+    ]
+   }
+  }
+ },
+ "sgd": {
+  "runs": 32,
+  "runs_in_predicted_direction": 32,
+  "blocks": 16,
+  "blocks_in_predicted_direction": 16,
+  "sign_test_p_blocks": 3.0517578125e-05,
+  "mean_block_stat": 0.07348624620498981,
+  "blocks_per_dataset": {
+   "mnist": 8,
+   "cifar10": 8
+  },
+  "frozen": {
+   "runs": 12,
+   "in_predicted_direction": 12,
+   "sign_test_p": 0.00048828125,
+   "mean_d1": -0.4641806795582563,
+   "mean_dhalf": -0.3484173227830815,
+   "mean_diff": -0.11576335677517478,
+   "max_q_residual": 7.051572197269707e-07,
+   "per_dataset": {
+    "mnist": [
+     -0.1134,
+     -0.1144,
+     -0.1143,
+     -0.1202,
+     -0.1189,
+     -0.1102
+    ],
+    "cifar10": [
+     -0.1194,
+     -0.1256,
+     -0.1167,
+     -0.1052,
+     -0.1164,
+     -0.1145
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,2 @@
+initialization: loss rel. change 1.2e-05  trH rel. change 1.2e+00  ntrace rel. change 2.9e-03  wtrace rel. change 4.6e-03
+after 30 Adam steps: loss rel. change 1.3e-04  trH rel. change 1.6e+00  ntrace rel. change 2.3e-03  wtrace rel. change 1.2e-03

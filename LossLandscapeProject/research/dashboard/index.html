@@ -132,7 +132,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   <section class="plate" aria-labelledby="readings-h">
     <div class="plate-head"><h2 id="readings-h">Main numbers</h2><span class="label">CIFAR-10 MLP unless noted</span></div>
     <div class="readings">
-      <div class="reading"><span class="label">Networks trained</span><span class="big num">624</span><p>CPU runs over 13 experiments. The 144 main runs were measured with 17 sharpness measures at five matched training losses.</p></div>
+      <div class="reading"><span class="label">Networks trained</span><span class="big num">684</span><p>660 CPU runs over 15 experiments and 24 GPU runs of ResNet-18. The 144 main runs were measured with 17 sharpness measures at five matched training losses.</p></div>
       <div class="reading"><span class="label">Coordinate factor</span><span class="big num">&times;2.0</span><p>Part of the Adam/SGD Hessian-trace ratio due to weight scaling alone: &minus;1.02 bits, 95% CI [&minus;1.16, &minus;0.87].</p></div>
       <div class="reading"><span class="label">Orbit excess</span><span class="big num"><span class="adam">1.2</span> <small>vs</small> <span class="sgd">1.8–3.4</span></span><p>Raw trace divided by its minimum over equivalent weights: Adam vs SGD, SGD+momentum and SAM (medians).</p></div>
       <div class="reading"><span class="label">P(Adam rated flatter)</span><span class="big num">0.64 <small>&rarr;</small> 0.01</span><p>At train loss 0.1, raw Hessian trace vs minimum sharpness.</p></div>
@@ -146,7 +146,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div><dt>Rescaling symmetry</dt><dd>Multiply a hidden neuron's incoming weights and bias by <span class="num">c&nbsp;&gt;&nbsp;0</span> and divide its outgoing weights by <span class="num">c</span>. The output does not change. All such rescalings of a network form its orbit.</dd></div>
       <div><dt>Conserved quantity Q</dt><dd><span class="num">Q = ‖w_in‖² − ‖w_out‖²</span> per neuron. Gradient flow conserves it (Du et al. 2018).</dd></div>
       <div><dt>Minimum sharpness</dt><dd>The smallest Hessian trace over the orbit (Ibayashi et al. 2021). Depends only on the function; computed exactly from the curvature diagonal.</dd></div>
-      <div><dt>Orbit excess</dt><dd>Raw trace / minimum sharpness (&ge; 1). So <b>raw trace = minimum sharpness &times; orbit excess</b>, a function part times a coordinate part.</dd></div>
+      <div><dt>Orbit excess</dt><dd>Raw trace / minimum sharpness (&ge; 1). So <b>raw trace = minimum sharpness &times; orbit excess</b>, an orbit-minimum part times a position-on-the-orbit part.</dd></div>
       <div><dt>Loss-matched comparison</dt><dd>Each run is measured when its training loss first drops below 1, 0.3, 0.1, 0.03 and 0.01, and optimizers are compared at equal loss rather than equal epochs.</dd></div>
     </dl>
   </section>
@@ -196,8 +196,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div class="notes">
         <ul>
           <li><b>CIFAR-10:</b> the relative-loss noise metric, isotropic noise and the Hessian trace rate Adam flatter (P &asymp; 0.62–0.75). Minimum sharpness and multiplicative noise rate it sharper (P &asymp; 0.01–0.31). Filter-normalized noise also rates it sharper, but it is only invariant to row scaling.</li>
-          <li>The coordinate part is about &minus;1 bit at every loss level, larger than the function part (+0.4 to +0.7 bits).</li>
-          <li><b>MNIST:</b> the coordinate part changes sign during training, so the raw ranking flips. The function part never favours Adam.</li>
+          <li>The coordinate part is about &minus;1 bit at every loss level, larger than the orbit-minimum part (+0.4 to +0.7 bits).</li>
+          <li><b>MNIST:</b> the coordinate part changes sign during training, so the raw ranking flips. The orbit-minimum part never favours Adam.</li>
           <li>SAM comes out clearly flatter than Adam only under invariant measures.</li>
         </ul>
       </div>
@@ -208,7 +208,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <thead><tr><th>Measure</th><th>Type</th><th class="r">loss 0.3</th><th class="r">loss 0.1</th><th class="r">loss 0.01</th></tr></thead>
         <tbody>
           <tr><td>Relative loss increase under noise (ΔL/L, test)</td><td>raw</td><td class="r">0.66</td><td class="r">0.62 <span class="muted">[0.40, 0.81]</span></td><td class="r">0.67</td></tr>
-          <tr><td>Hessian trace (Gauss–Newton)</td><td>raw</td><td class="r">0.75</td><td class="r">0.64 <span class="muted">[0.44, 0.83]</span></td><td class="r">0.72</td></tr>
+          <tr><td>Hessian trace (= Gauss–Newton trace for these networks)</td><td>raw</td><td class="r">0.75</td><td class="r">0.64 <span class="muted">[0.44, 0.83]</span></td><td class="r">0.72</td></tr>
           <tr><td>&lambda;<sub>max</sub></td><td>raw</td><td class="r">0.37</td><td class="r">0.29</td><td class="r">0.45</td></tr>
           <tr><td>Minimum sharpness</td><td>invariant</td><td class="r">0.06</td><td class="r">0.01 <span class="muted">[0.00, 0.06]</span></td><td class="r">0.22</td></tr>
           <tr><td>Filter-normalized noise</td><td>row scaling only</td><td class="r">0.14</td><td class="r">0.08</td><td class="r">0.06</td></tr>
@@ -334,7 +334,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <li>Both optimizers lose the initial differences within one epoch: a 7&times; (MNIST) or 17&times; (CIFAR-10) spread shrinks to 1.3–1.9&times; and ends at 1.03–1.19&times;.</li>
           <li>In weight space SGD keeps 90–99% of the separation in Q (79–83% with label noise); Adam widens it to 1.5–2.0&times; in 7 of 8 runs.</li>
           <li>Adam ends below SGD from every start: 1.29–1.51 vs 1.71–1.89 (MNIST), 1.09–1.35 vs 1.78–2.04 (CIFAR-10).</li>
-          <li>With label noise the slow-phase result replicates: 12/12 runs per optimizer (p = 0.0005 each), 20/20 over both experiments.</li>
+          <li>With label noise the slow-phase result holds in all 32 runs per optimizer, from 16 independent initializations (p = 3&times;10<sup>&minus;5</sup>), and also with the curvature held fixed (12 of 12 new runs each).</li>
         </ul>
         <div class="callout warn"><b>Partial</b>Per neuron, Adam's drift matches the &Sigma;&radic;G balance better than the trace balance in all 24 runs. SGD matches the trace balance on MNIST (6/6) but not on CIFAR-10 (0/6), although the network as a whole still moves toward minimum trace.</div>
       </div>
@@ -351,7 +351,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div class="notes">
         <ul>
           <li>The coordinate part does not grow with depth: &minus;0.48 to &minus;0.74 bits against SGD at every depth.</li>
-          <li>The function part does: against SGD, from +0.26–0.37 bits (1 layer) to +0.76–0.89 bits (8 layers).</li>
+          <li>The orbit-minimum part does: against SGD, from +0.26–0.37 bits (1 layer) to +0.76–0.89 bits (8 layers).</li>
           <li>At 1–2 layers the raw trace rates Adam flatter in every pair and the invariant measure rates it sharper in every pair. At 8 layers the bias hides most of the difference instead.</li>
         </ul>
       </div>
@@ -372,7 +372,26 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <li>Invariant measures (&Sigma;w²H<sub>ii</sub>, ASAM, multiplicative) do not follow the norm and rate Adam flatter in every pairing (70/72 and 72/72 pairs).</li>
           <li>Weight decay at these strengths has little effect before loss 0.1 at matched learning rate.</li>
         </ul>
-        <div class="callout warn"><b>Direction</b>The bias favours Adam on plain MLPs and SGD with BatchNorm. Invariant measures rate Adam sharper on the plain MLP and the CNN but flatter here, so the paper makes no general claim about which optimizer is flatter.</div>
+        <div class="callout warn"><b>Direction</b>Invariant measures rate Adam sharper on the plain MLP, the CNN and ResNet-18, but flatter in this BatchNorm MLP, so the paper makes no general claim about which optimizer is flatter.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="resnet" class="plate">
+    <div class="plate-head"><h2>ResNet-18 on full CIFAR-10</h2><span class="label">24 GPU runs</span></div>
+    <div class="plate-body">
+      <figure>
+        <img src="../figures/fig11_resnet.png" alt="Raw Hessian trace and the per-weight-invariant trace against the conv filter norm for ResNet-18 runs.">
+        <figcaption>Training loss 0.01, one point per run. Filled: no augmentation or weight decay. Hollow: standard recipe.</figcaption>
+      </figure>
+      <div class="notes">
+        <p>ResNet-18 has BatchNorm after every convolution, so this tests the BatchNorm regime, not the ReLU-orbit decomposition.</p>
+        <ul>
+          <li>Without augmentation the raw trace follows the filter norms (Spearman &minus;0.62 to &minus;0.96), and its verdict is all or nothing per learning-rate pairing: Adam flatter in 22 of 54 comparisons.</li>
+          <li>&Sigma;w&sup2;H<sub>ii</sub> and ASAM rate Adam sharper in 53 and 54 of 54, about 2.1&ndash;2.9&times; against SGD. This is the opposite direction from the BatchNorm MLP.</li>
+          <li>With the standard recipe (93&ndash;95% test accuracy) the raw trace rates AdamW 1.3&ndash;4.9&times; flatter than SGD+M in every seed, mostly through its larger filters; the invariant measures do not confirm it.</li>
+          <li>Adam with coupled L2 weight decay collapses many deep filters to zero and is left out of the comparison.</li>
+        </ul>
       </div>
     </div>
   </section>
@@ -393,9 +412,12 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td><code>func_adamq</code></td><td class="r">36</td><td>Adam-Q controls (every 50 steps, one layer, no moment transform)</td></tr>
           <tr><td><code>func_teleport</code></td><td class="r">32</td><td>Teleporting SGD / SGD+M to minimum trace</td></tr>
           <tr><td><code>orbit_dynamics</code></td><td class="r">32</td><td>400–600 epoch runs with and without label noise</td></tr>
+          <tr><td><code>label_noise_seeds</code></td><td class="r">24</td><td>Six more label-noise seeds per dataset, with a frozen-curvature test</td></tr>
           <tr><td><code>coordinate_memory</code></td><td class="r">48</td><td>Same function started at three orbit points</td></tr>
           <tr><td><code>depth_cifar10</code></td><td class="r">36</td><td>MLPs with 1, 2, 4, 8 hidden layers</td></tr>
           <tr><td><code>bn_cifar10</code></td><td class="r">24</td><td>BatchNorm MLP; SGD, SGD+M, Adam, SGD+M with weight decay, AdamW</td></tr>
+          <tr><td><code>adam_orbit</code></td><td class="r">12</td><td>Adam held at the minimum-trace or minimum-norm orbit point</td></tr>
+          <tr><td><code>resnet18_noaug</code>, <code>resnet18_aug</code></td><td class="r">24</td><td>ResNet-18 on full CIFAR-10 (GPU), without and with augmentation and weight decay</td></tr>
         </tbody>
       </table>
     </div>
