@@ -27,10 +27,12 @@ any `c > 0` and its outgoing weights divided by `c`. Most sharpness measures (He
 perturbations, SAM sharpness) change under this rescaling. So they measure two things at once: how
 sharp the learned **function** is, and which of the equivalent **coordinates** the network sits at.
 For the Hessian trace the split is exact (in ReLU networks without normalization layers the Hessian
-and Gauss–Newton diagonals coincide, so the trace is the same for both):
+and Gauss–Newton diagonals coincide, so the trace is the same for both). Minimum sharpness is invariant on
+the rescaling orbit; it is not a property of the input–output function in general, since redundant units
+can represent one function on several orbits:
 
 ```
-raw trace  =  minimum sharpness (function only)  ×  orbit excess (coordinates only, ≥ 1)
+raw trace  =  minimum sharpness (minimum over the orbit)  ×  orbit excess (position on the orbit, ≥ 1)
 ```
 
 The key observation is that **the optimizer chooses the coordinates**:
@@ -50,7 +52,7 @@ optimizer, and that factor is as large as the effects being measured.
 | Adam keeps its orbit excess at ≈1.2; SGD, SGD+momentum and SAM sit at 1.8–3.4 | 144 loss-matched MLP runs, 17 measures |
 | On a CIFAR-10 MLP, the coordinate factor favours Adam by ≈2× and **reverses** the ranking: P(Adam rated flatter than SGD) = 0.62–0.75 by raw trace-type measures, 0.01–0.22 by minimum sharpness | Table 1, Fig. 3 |
 | On MNIST it **flips** the raw ranking during training; on a CNN it **masks** a 2× real difference | §5.2, §5.8 |
-| **Causal test.** Removing Adam's drift after every step (Adam-Q, function unchanged) raises raw trace ×1.91 and leaves minimum sharpness unchanged (×0.98) | 36 + 36 runs |
+| **Causal test.** Removing Adam's drift after every step (Adam-Q, function preserved to float32 precision) raises raw trace ×1.91 and leaves minimum sharpness unchanged (×0.98) | 36 + 36 runs |
 | The bias hurts **cross-optimizer** sharpness–generalization correlations (Kendall τ 0.38 → 0.61 when it is removed) and leaves within-optimizer ones intact | §5.6 |
 | **Two phases.** A fast first-order drift (Adam reaches excess ≈1.1 within 5 epochs), then a slow noise-driven drift. With label noise, SGD moves toward minimum trace and Adam toward minimum Σ√G_ii, the destinations predicted by implicit-regularization theory, in **all 32 runs each, from 16 independent initializations** (p = 3×10⁻⁵), and also with the curvature held fixed | §5.1, §5.5; 104 runs |
 | The excess is set by training dynamics, not by the starting point: the same function started at three orbit points ends at nearly the same excess, and Adam ends below SGD from every start | §5.5; 48 runs |

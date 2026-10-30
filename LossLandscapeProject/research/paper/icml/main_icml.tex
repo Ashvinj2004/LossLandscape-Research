@@ -117,10 +117,10 @@ $H\ne G$ off the diagonal, so we compute $\lambda_{\max}$ from $H$; the trace, $
 \begin{definition}[Minimum sharpness and orbit excess]
 Following \citet{ibayashi2021minimum}, for $p>0$ let $\MS_p(\theta)=\min_{\theta'\in\mathrm{orbit}(\theta)}\sum_iG_{ii}(\theta')^{p}$. $\MS_1$ is the minimal trace and $\MS_{1/2}$ the orbit minimum of Adam's implicit regularizer \citep{li2025adam}. The \emph{orbit excess} is $E=\tr G/\MS_1\ge1$, so that
 \begin{equation}\label{eq:factor}
-\tr G(\theta)=\underbrace{\MS_1(\theta)}_{\text{function}}\times\underbrace{E(\theta)}_{\text{coordinates}}.
+\tr G(\theta)=\underbrace{\MS_1(\theta)}_{\text{orbit minimum}}\times\underbrace{E(\theta)}_{\text{orbit excess}}.
 \end{equation}
 \end{definition}
-$\MS_1$ is constant on the rescaling orbit (an orbit invariant, not a property of the input--output function: redundant units can represent one function on several orbits), so a comparison of $\log\tr G$ splits \emph{exactly} into a function term and a coordinate term. The objective is a posynomial in the unit scales, convex in their logarithms; exact coordinate descent has the closed form $c_j^{2p}=\sqrt{A_j/B_j}$, where $A_j$ and $B_j$ aggregate unit $j$'s incoming and outgoing curvature. At $p=1$ the optimum is \emph{curvature balance}, $A_j=B_j$, not the norm balance of the minimum-norm point. We compute $\mathrm{diag}(G)$ exactly (one backward pass per class for MLPs, per-sample gradients for CNNs); $\MS_p$ then takes milliseconds.
+$\MS_1$ is constant on the rescaling orbit (an orbit invariant, not a property of the input--output function: redundant units can represent one function on several orbits), so a comparison of $\log\tr G$ splits \emph{exactly} into a orbit-minimum term and a coordinate term. The objective is a posynomial in the unit scales, convex in their logarithms; exact coordinate descent has the closed form $c_j^{2p}=\sqrt{A_j/B_j}$, where $A_j$ and $B_j$ aggregate unit $j$'s incoming and outgoing curvature. At $p=1$ the optimum is \emph{curvature balance}, $A_j=B_j$, not the norm balance of the minimum-norm point. We compute $\mathrm{diag}(G)$ exactly (one backward pass per class for MLPs, per-sample gradients for CNNs); $\MS_p$ then takes milliseconds.
 
 %===============================================================================
 \section{Experimental protocol}\label{sec:protocol}
@@ -150,31 +150,31 @@ We log both terms of~\eqref{eq:decomp} at every step on the CIFAR-10 MLP across 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.92\textwidth]{fig1_flip.pdf}
-\caption{\textbf{(a)} Probability that Adam's minimum is rated flatter than SGD's (108 loss-matched pairs, training loss $0.1$). \textbf{(b)} Exact split~\eqref{eq:factor} of the Adam/SGD trace ratio into a function term and a coordinate term at each matched loss. On CIFAR-10 the coordinate term favours Adam by $\approx2\times$ and outweighs the function term; on MNIST it changes sign during training.}
+\caption{\textbf{(a)} Probability that Adam's minimum is rated flatter than SGD's (108 loss-matched pairs, training loss $0.1$). \textbf{(b)} Exact split~\eqref{eq:factor} of the Adam/SGD trace ratio into a orbit-minimum term and a coordinate term at each matched loss. On CIFAR-10 the coordinate term favours Adam by $\approx2\times$ and outweighs the orbit-minimum term; on MNIST it changes sign during training.}
 \label{fig:flip}
 \end{figure*}
 
-\textbf{CIFAR-10: a reversal.} At every matched loss, Adam is rated flatter than SGD by the original metric ($P=0.62$--$0.67$), isotropic sharpness ($0.69$--$0.75$), the Hessian trace ($0.62$--$0.74$) and $\sum_i\sqrt{G_{ii}}$ ($0.84$--$1.00$), and sharper by minimum sharpness ($0.01$--$0.22$), $\MS_{1/2}$, multiplicative sharpness and $\sum_iw_i^2G_{ii}$ (Fig.~\ref{fig:flip}a, Table~\ref{tab:flip}). The disagreement is well determined: $P_{\tr G}-P_{\MS_1}=+0.63$ $[+0.43,+0.81]$ at loss $0.1$. The exact split explains it: the function term is $+0.43$ to $+0.71$ bits (Adam sharper) and the coordinate term $-1.02$ to $-1.05$ bits, a factor of almost exactly $2$ in Adam's favour at every loss (Fig.~\ref{fig:flip}b). Against SAM, the one optimizer designed to seek flat minima, raw trace is inconclusive ($P=0.44$--$0.60$) because a large function term in SAM's favour is cancelled by the coordinate term; invariant measures identify SAM as clearly flatter ($P=0.00$--$0.23$).
+\textbf{CIFAR-10: a reversal.} At every matched loss, Adam is rated flatter than SGD by the original metric ($P=0.62$--$0.67$), isotropic sharpness ($0.69$--$0.75$), the Hessian trace ($0.62$--$0.74$) and $\sum_i\sqrt{G_{ii}}$ ($0.84$--$1.00$), and sharper by minimum sharpness ($0.01$--$0.22$), $\MS_{1/2}$, multiplicative sharpness and $\sum_iw_i^2G_{ii}$ (Fig.~\ref{fig:flip}a, Table~\ref{tab:flip}). The disagreement is well determined: $P_{\tr G}-P_{\MS_1}=+0.63$ $[+0.43,+0.81]$ at loss $0.1$. The exact split explains it: the orbit-minimum term is $+0.43$ to $+0.71$ bits (Adam sharper) and the coordinate term $-1.02$ to $-1.05$ bits, a factor of almost exactly $2$ in Adam's favour at every loss (Fig.~\ref{fig:flip}b). Against SAM, the one optimizer designed to seek flat minima, raw trace is inconclusive ($P=0.44$--$0.60$) because a large orbit-minimum term in SAM's favour is cancelled by the coordinate term; invariant measures identify SAM as clearly flatter ($P=0.00$--$0.23$).
 
-\textbf{MNIST: a flip during training.} The initial excess is smaller. Early on SGD's excess is \emph{below} Adam's and raw measures rate Adam sharper ($P=0.06$ for the trace at loss $0.3$); as SGD's excess grows the coordinate term turns ($-0.40$ bits at loss $0.01$) and the raw ordering flips ($P=0.80$), while the function term never favours Adam.
+\textbf{MNIST: a flip during training.} The initial excess is smaller. Early on SGD's excess is \emph{below} Adam's and raw measures rate Adam sharper ($P=0.06$ for the trace at loss $0.3$); as SGD's excess grows the coordinate term turns ($-0.40$ bits at loss $0.01$) and the raw ordering flips ($P=0.80$), while the orbit-minimum term never favours Adam.
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.85\textwidth]{fig6_cnn.pdf}
-\caption{\textbf{CNN on CIFAR-10.} \textbf{(a)} Orbit excess at matched training loss; rescaling acts on convolutional channels, through max-pooling and the flatten into the dense layer. \textbf{(b)} Exact split of the Adam/X trace ratio. On this network Adam's solutions are sharper at the function level, and the coordinate term, which again favours Adam and grows during training, hides most of that difference.}
+\caption{\textbf{CNN on CIFAR-10.} \textbf{(a)} Orbit excess at matched training loss; rescaling acts on convolutional channels, through max-pooling and the flatten into the dense layer. \textbf{(b)} Exact split of the Adam/X trace ratio. On this network Adam's solutions are sharper in orbit-minimized sharpness, and the coordinate term, which again favours Adam and grows during training, hides most of that difference.}
 \label{fig:cnn}
 \end{figure*}
 
-\textbf{CNN: a mask.} On the CNN Adam's solutions are clearly sharper at the function level ($+1.27$ to $+2.30$ bits against SGD; every invariant measure gives $P=0.00$), and the coordinate term again favours Adam and grows during training ($-0.31$ to $-0.93$ bits). Against SGD+M it hides most of the difference: raw measures are inconclusive ($P=0.25$--$0.50$) although Adam is about $2\times$ sharper (Fig.~\ref{fig:cnn}).
+\textbf{CNN: a mask.} On the CNN Adam's solutions are clearly sharper in orbit-minimized sharpness ($+1.27$ to $+2.30$ bits against SGD; every invariant measure gives $P=0.00$), and the coordinate term again favours Adam and grows during training ($-0.31$ to $-0.93$ bits). Against SGD+M it hides most of the difference: raw measures are inconclusive ($P=0.25$--$0.50$) although Adam is about $2\times$ sharper (Fig.~\ref{fig:cnn}).
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig10_depth.pdf}
-\caption{\textbf{Depth.} Exact split~\eqref{eq:factor} of the Adam/X trace ratio for CIFAR-10 MLPs with 1--8 hidden layers of width 128 (three seeds each). The coordinate term is about the same at every depth; the function term grows with depth, so the coordinate factor reverses the raw ordering in shallow networks and masks the difference in deep ones.}
+\caption{\textbf{Depth.} Exact split~\eqref{eq:factor} of the Adam/X trace ratio for CIFAR-10 MLPs with 1--8 hidden layers of width 128 (three seeds each). The coordinate term is about the same at every depth; the orbit-minimum term grows with depth, so the coordinate factor reverses the raw ordering in shallow networks and masks the difference in deep ones.}
 \label{fig:depth}
 \end{figure}
 
-\textbf{Depth.} In MLPs with 1, 2, 4 and 8 hidden layers the coordinate term is the same at every depth ($-0.48$ to $-0.74$ bits against SGD), while the function term grows ($+0.26$--$+0.37$ bits at depth 1, $+0.76$--$+0.89$ at depth 8): the factor reverses the ordering in shallow networks and masks it in deep ones (Fig.~\ref{fig:depth}).
+\textbf{Depth.} In MLPs with 1, 2, 4 and 8 hidden layers the coordinate term is the same at every depth ($-0.48$ to $-0.74$ bits against SGD), while the orbit-minimum term grows ($+0.26$--$+0.37$ bits at depth 1, $+0.76$--$+0.89$ at depth 8): the factor reverses the ordering in shallow networks and masks it in deep ones (Fig.~\ref{fig:depth}).
 
 \begin{table}[t]
 \centering

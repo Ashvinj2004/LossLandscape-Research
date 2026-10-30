@@ -146,7 +146,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div><dt>Rescaling symmetry</dt><dd>Multiply a hidden neuron's incoming weights and bias by <span class="num">c&nbsp;&gt;&nbsp;0</span> and divide its outgoing weights by <span class="num">c</span>. The output does not change. All such rescalings of a network form its orbit.</dd></div>
       <div><dt>Conserved quantity Q</dt><dd><span class="num">Q = ‖w_in‖² − ‖w_out‖²</span> per neuron. Gradient flow conserves it (Du et al. 2018).</dd></div>
       <div><dt>Minimum sharpness</dt><dd>The smallest Hessian trace over the orbit (Ibayashi et al. 2021). Depends only on the function; computed exactly from the curvature diagonal.</dd></div>
-      <div><dt>Orbit excess</dt><dd>Raw trace / minimum sharpness (&ge; 1). So <b>raw trace = minimum sharpness &times; orbit excess</b>, a function part times a coordinate part.</dd></div>
+      <div><dt>Orbit excess</dt><dd>Raw trace / minimum sharpness (&ge; 1). So <b>raw trace = minimum sharpness &times; orbit excess</b>, an orbit-minimum part times a position-on-the-orbit part.</dd></div>
       <div><dt>Loss-matched comparison</dt><dd>Each run is measured when its training loss first drops below 1, 0.3, 0.1, 0.03 and 0.01, and optimizers are compared at equal loss rather than equal epochs.</dd></div>
     </dl>
   </section>
@@ -196,8 +196,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div class="notes">
         <ul>
           <li><b>CIFAR-10:</b> the relative-loss noise metric, isotropic noise and the Hessian trace rate Adam flatter (P &asymp; 0.62–0.75). Minimum sharpness and multiplicative noise rate it sharper (P &asymp; 0.01–0.31). Filter-normalized noise also rates it sharper, but it is only invariant to row scaling.</li>
-          <li>The coordinate part is about &minus;1 bit at every loss level, larger than the function part (+0.4 to +0.7 bits).</li>
-          <li><b>MNIST:</b> the coordinate part changes sign during training, so the raw ranking flips. The function part never favours Adam.</li>
+          <li>The coordinate part is about &minus;1 bit at every loss level, larger than the orbit-minimum part (+0.4 to +0.7 bits).</li>
+          <li><b>MNIST:</b> the coordinate part changes sign during training, so the raw ranking flips. The orbit-minimum part never favours Adam.</li>
           <li>SAM comes out clearly flatter than Adam only under invariant measures.</li>
         </ul>
       </div>
@@ -351,7 +351,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div class="notes">
         <ul>
           <li>The coordinate part does not grow with depth: &minus;0.48 to &minus;0.74 bits against SGD at every depth.</li>
-          <li>The function part does: against SGD, from +0.26–0.37 bits (1 layer) to +0.76–0.89 bits (8 layers).</li>
+          <li>The orbit-minimum part does: against SGD, from +0.26–0.37 bits (1 layer) to +0.76–0.89 bits (8 layers).</li>
           <li>At 1–2 layers the raw trace rates Adam flatter in every pair and the invariant measure rates it sharper in every pair. At 8 layers the bias hides most of the difference instead.</li>
         </ul>
       </div>

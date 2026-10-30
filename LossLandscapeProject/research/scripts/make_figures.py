@@ -126,8 +126,8 @@ def fig_flip(sweeps, target=0.1, other="sgd", name="fig1_flip"):
             fun.append(a.l_fun.mean() - x.l_fun.mean())
             coord.append(a.l_coord.mean() - x.l_coord.mean())
             raw.append(a.l_raw.mean() - x.l_raw.mean())
-        bx.bar(xs - width / 2, fun, width=width, color="#1c5cab", label="function (minimum sharpness)" if k == 0 else None)
-        bx.bar(xs + width / 2, coord, width=width, color="#86b6ef", label="coordinates (orbit excess)" if k == 0 else None)
+        bx.bar(xs - width / 2, fun, width=width, color="#1c5cab", label="orbit minimum (MS₁)" if k == 0 else None)
+        bx.bar(xs + width / 2, coord, width=width, color="#86b6ef", label="orbit excess (coordinates)" if k == 0 else None)
         bx.plot(xs, raw, ls="none", marker="D", ms=5, color=INK, markeredgecolor="white", markeredgewidth=0.6,
                 label="raw trace = sum" if k == 0 else None)
         bx.text(xs.mean(), -1.22, DS_LABEL.get(s_, s_), ha="center", fontsize=6.8, color=INK2)
@@ -141,7 +141,7 @@ def fig_flip(sweeps, target=0.1, other="sgd", name="fig1_flip"):
     bx.set_ylabel(f"log₂(Adam / {STYLE[other][0]}) of Hessian trace\n← Adam flatter      Adam sharper →", fontsize=7)
     bx.legend(loc="upper right", fontsize=6.2, handlelength=1.2)
     bx.grid(axis="x", visible=False)
-    bx.set_title("(b) Raw trace = function × coordinates (exact)", loc="left")
+    bx.set_title("(b) Raw trace = orbit minimum × orbit excess", loc="left")
     fig.tight_layout(w_pad=1.5)
     save(fig, name)
 
@@ -422,8 +422,8 @@ def fig_cnn(name="fig6_cnn"):
             fun.append(a.l_fun.mean() - x.l_fun.mean())
             coord.append(a.l_coord.mean() - x.l_coord.mean())
             raw.append(a.l_raw.mean() - x.l_raw.mean())
-        bx.bar(xs - width / 2, fun, width=width, color="#1c5cab", label="function (minimum sharpness)" if k == 0 else None)
-        bx.bar(xs + width / 2, coord, width=width, color="#86b6ef", label="coordinates (orbit excess)" if k == 0 else None)
+        bx.bar(xs - width / 2, fun, width=width, color="#1c5cab", label="orbit minimum (MS₁)" if k == 0 else None)
+        bx.bar(xs + width / 2, coord, width=width, color="#86b6ef", label="orbit excess (coordinates)" if k == 0 else None)
         bx.plot(xs, raw, ls="none", marker="D", ms=5, color=INK, markeredgecolor="white", markeredgewidth=0.6,
                 label="raw trace = sum" if k == 0 else None)
         bx.text(xs.mean(), -1.25, f"Adam vs {STYLE[other][0]}", ha="center", fontsize=6.8, color=INK2)
@@ -437,7 +437,7 @@ def fig_cnn(name="fig6_cnn"):
     bx.set_ylabel("log₂(Adam / X) of Hessian trace\n← Adam flatter      Adam sharper →", fontsize=7)
     bx.legend(loc="upper right", fontsize=6.2, handlelength=1.2)
     bx.grid(axis="x", visible=False)
-    bx.set_title("(b) Raw trace = function × coordinates", loc="left")
+    bx.set_title("(b) Raw trace = orbit minimum × orbit excess", loc="left")
     fig.tight_layout(w_pad=1.5)
     save(fig, name)
 
@@ -575,8 +575,8 @@ def fig_depth(name="fig10_depth"):
                 A, B = g[g.opt == "adam"], g[g.opt == other]
                 fun.append(A.l_fun.mean() - B.l_fun.mean())
                 coord.append(A.l_coord.mean() - B.l_coord.mean())
-            ax.plot(depths, fun, marker=mk, color="#1c5cab", label=f"function, loss {tgt:g}")
-            ax.plot(depths, coord, marker=mk, color="#86b6ef", ls="--", label=f"coordinates, loss {tgt:g}")
+            ax.plot(depths, fun, marker=mk, color="#1c5cab", label=f"orbit minimum, loss {tgt:g}")
+            ax.plot(depths, coord, marker=mk, color="#86b6ef", ls="--", label=f"orbit excess, loss {tgt:g}")
             ax.plot(depths, np.add(fun, coord), marker=mk, color=INK, lw=0.9, ls=":", label=f"raw trace, loss {tgt:g}")
         ax.axhline(0, color="#c3c2b7", lw=0.8)
         ax.set_xscale("log", base=2)
