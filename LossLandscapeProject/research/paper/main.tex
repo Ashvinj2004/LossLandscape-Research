@@ -1,13 +1,16 @@
-\documentclass[11pt]{article}
-\usepackage[margin=1in]{geometry}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
+\documentclass[10pt]{article}
+% Build with build.sh: main.pdf is the named preprint (arXiv); main_anon.pdf the anonymous TMLR review version.
+\ifdefined\ANON
+\usepackage{tmlr}
+\else
+\usepackage[preprint]{tmlr}
+\fi
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage[numbers,sort&compress]{natbib}
 \usepackage{xcolor}
 \usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage{url}
 \usepackage{enumitem}
 \usepackage{microtype}
 
@@ -24,9 +27,9 @@
 \graphicspath{{../figures/}}
 
 \title{Flat in the Wrong Coordinates:\\ Optimizer-Induced Symmetry Drift Biases\\ Sharpness Comparisons Between Adam and SGD}
-\author{Ashvin Jaison Olickal\\ School of Computer Science and Engineering, VIT-AP University\\ \texttt{ashvinj2004@gmail.com}
-}
-\date{}
+\author{\name Ashvin Jaison Olickal \email ashvinj2004@gmail.com \\
+      \addr School of Computer Science and Engineering\\
+      VIT-AP University}
 
 \begin{document}
 \maketitle
@@ -40,7 +43,7 @@ When two optimizers produce minima of different sharpness, how much of the diffe
 %===============================================================================
 The idea that flat minima generalize better than sharp ones \citep{hochreiter1997flat,keskar2017large} motivates both analysis tools and optimizers such as SAM \citep{foret2021sam}. A recurring empirical question is \emph{which optimizer finds flatter minima}. Adaptive methods such as Adam \citep{kingma2015adam} are often reported to generalize worse than SGD \citep{wilson2017marginal}, and a popular explanation is that they converge to sharper minima \citep{zhou2020towards}. Measurements nevertheless disagree, and recent theory suggests that Adam and SGD implicitly minimize \emph{different} notions of sharpness \citep{li2025adam}.
 
-This paper began as an attempt to answer that question with a standard tool, the relative increase in loss under isotropic Gaussian weight noise, $(L(w+\sigma\varepsilon)-L(w))/L(w)$. The preliminary result was that Adam's minima appeared \emph{flatter} than SGD's on both MNIST and CIFAR-10, the opposite of the usual narrative. Before reporting it, we checked whether it was an artifact. It was, and the reason turned out to be general and mechanistic.
+This paper began\footnote{\ifdefined\ANON The authors\else The author\fi\ used an AI assistant (Claude, Anthropic) extensively for writing code, running and analysing experiments, and drafting and revising the text. \ifdefined\ANON The authors\else The author\fi\ directed the project, made the scientific decisions, checked the results and take\ifdefined\ANON\else s\fi\ full responsibility for the content.} as an attempt to answer that question with a standard tool, the relative increase in loss under isotropic Gaussian weight noise, $(L(w+\sigma\varepsilon)-L(w))/L(w)$. The preliminary result was that Adam's minima appeared \emph{flatter} than SGD's on both MNIST and CIFAR-10, the opposite of the usual narrative. Before reporting it, we checked whether it was an artifact. It was, and the reason turned out to be general and mechanistic.
 
 Coordinate-dependent sharpness is known to be manipulable: \citet{dinh2017sharp} showed that function-preserving reparameterizations of ReLU networks can make any minimum arbitrarily sharp or flat. A common reply is that no optimizer performs such reparameterizations, so the objection is academic. Our central finding is that \textbf{Adam does perform them}. It moves systematically along the network's rescaling symmetries and settles at coordinates whose Hessian trace is typically only $10$--$50\%$ above the minimum attainable on the same rescaling orbit. SGD provably does not move along them at first order. A raw sharpness comparison between Adam and SGD therefore compares two functions \emph{and} two positions on their symmetry orbits, and we show that the second factor is often the larger one. Figure~\ref{fig:teaser} illustrates this on two trained CIFAR-10 networks.
 
@@ -80,11 +83,11 @@ Further results test the scope of these claims: SGD teleported to Adam's coordin
 & \citet{li2025adam} & This paper\\
 \midrule
 Question & Which sharpness does Adam implicitly reduce near a manifold of minimizers? & How much of a \emph{measured} Adam--SGD sharpness difference comes from the position on a rescaling orbit?\\
-Kind of result & Theorem, in a slow-SDE approximation (small learning rate, long horizon) near the minimizer manifold, with label noise & Exact per-step identity for the first-order orbit drift (Prop.~\ref{prop:drift}); everything else is measured\\
+Kind of result & Theorem in a slow-SDE approximation (small learning rate, long horizon) near the minimizer manifold. Under label noise (gradient-noise covariance proportional to the Hessian on the manifold) the slow dynamics reduce to a flow whose fixed points, for $\epsilon=0$, are stationary points of $\tr\,\mathrm{Diag}(H)^{1/2}$ on the manifold & Exact per-step identity for the first-order orbit drift (Prop.~\ref{prop:drift}); everything else is measured\\
 Sharpness & $\tr\,\mathrm{Diag}(H)^{1/2}$ for Adam vs.\ $\tr H$ for SGD & 17 measures; the trace split into $\MS_1\times E$\\
 Optimizers & Adam and other adaptive methods (RMSProp, Adam-mini, Adalayer) vs.\ SGD & SGD, SGD+M, SAM, Adam, RMSprop, signSGD\\
-Experiments & Sparse linear regression with diagonal linear networks; deep matrix factorization (a failure case) & MLPs, a small CNN and a BatchNorm MLP on MNIST / CIFAR-10 subsets\\
-Relation & --- & We do not re-derive their result. Our label-noise runs (\S\ref{sec:labelnoise}) use the orbit, where the minimizer of $\sum_i\sqrt{G_{ii}}$ is computable exactly, as an \emph{empirical test} of their prediction in nonlinear networks\\
+Experiments & Sparse linear regression with diagonal linear networks, where Adam recovers the sparse solution with less data; deep matrix factorization with label noise, where Adam ends at a larger $\tr H$ and generalizes worse than SGD & MLPs, a small CNN and BatchNorm networks (an MLP; ResNet-18 on full CIFAR-10) on MNIST and CIFAR-10\\
+Relation & --- & We do not re-derive their result. Our label-noise runs (\S\ref{sec:labelnoise}) use the orbit, where the minimizer of $\sum_i\sqrt{G_{ii}}$ is computable exactly, as an \emph{empirical test} of their prediction in nonlinear networks. Their matrix-factorization finding that Adam ends at a larger $\tr H$ matches our observation that label-noise Adam's trace excess rises\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -176,8 +179,8 @@ The identity holds by definition; its content is that $\MS_1$ is constant on the
 \textbf{Loss matching.} Comparing optimizers after a fixed number of epochs conflates optimizer effects with how far training has progressed, and cross-entropy curvature shrinks with the loss. Each run is therefore measured when its full training loss first falls below each of $\{1,0.3,0.1,0.03,0.01\}$, and only checkpoints at the same target are compared. All 144 MLP runs reached every target. (One CIFAR-10 SGD+M run crossed $0.03$ and $0.01$ within the same epoch; its checkpoint is used for $0.01$ only.)
 \textbf{Measures.} On a fixed subset of 4096 training examples we compute 17 measures (Appendix~\ref{app:measures}).
 \emph{Coordinate-dependent:} the original metric (relative isotropic Gaussian sharpness on the test set, $\sigma=0.01$); isotropic average sharpness; the Hessian trace, both as a Hutchinson estimate \citep{hutchinson1989stochastic} and exactly as $\tr G$ (the same quantity by Lemma~\ref{lem:diag}); $\lambda_{\max}$ (Lanczos); worst-case SAM sharpness (10-step PGD); $\sum_i\sqrt{G_{ii}}$; and several of these at the minimum-norm point (\emph{canonicalized}).
-\emph{Rescaling-invariant:} $\MS_1$, $\MS_{1/2}$, multiplicative (elementwise-relative) average sharpness, ASAM worst-case sharpness \citep{kwon2021asam}, and $\sum_iw_i^2G_{ii}$. We also report filter-normalized average sharpness \citep{li2018visualizing}, which is often used as a scale-invariant measure. It is invariant to scaling a unit's incoming weights, but \emph{not} to the compensating scaling of its outgoing weights, which changes the norms of the next layer's rows unevenly. A random rescaling with log-scale s.d.\ $1$ changes it by a factor of $9.5$ in our MLP, while the other perturbation measures above are unchanged to within $10^{-4}$ (\texttt{scripts/test\_invariance.py}). We therefore treat it as \emph{partially} invariant.
-\textbf{Statistic.} For a measure $S$ we report $P(S_{\mathrm{Adam}}<S_X)$ over all pairs of Adam and $X$ configurations sharing a seed and loss target (108 pairs). This is a common-language effect size, with $0.5$ meaning no difference. For the trace we also report the exact split of $\log_2(\overline{\tr G}_{\mathrm{Adam}}/\overline{\tr G}_X)$ (geometric means) into function and coordinate terms via~\eqref{eq:factor}. 95\% confidence intervals come from a bootstrap that resamples runs within each seed, independently for the two optimizers (2000 resamples). The resampling unit is the training run, so the dependence between the many pairs that share a run is accounted for. The intervals treat the six configurations per seed as exchangeable; they describe uncertainty over this learning-rate and batch-size grid, not over optimizers in general. The loss targets are measured on the same runs, so agreement across targets is consistency, not independent replication.
+\emph{Rescaling-invariant:} $\MS_1$, $\MS_{1/2}$, multiplicative (elementwise-relative) average sharpness, ASAM worst-case sharpness \citep{kwon2021asam}, and $\sum_iw_i^2G_{ii}$. We also report filter-normalized average sharpness \citep{li2018visualizing}, which is often used as a scale-invariant measure. It is invariant to scaling a unit's incoming weights, but \emph{not} to the compensating scaling of its outgoing weights, which changes the norms of the next layer's rows unevenly. A random rescaling with log-scale s.d.\ $1$ changes it by a factor of $9.5$ in our MLP, while the multiplicative and ASAM measures and $\sum_iw_i^2G_{ii}$ are unchanged to within $10^{-4}$ (\texttt{scripts/test\_invariance.py}). We therefore treat it as \emph{partially} invariant.
+\textbf{Statistic.} For a measure $S$ we report $P(S_{\mathrm{Adam}}<S_X)$ over all pairs of Adam and $X$ configurations sharing a seed and loss target (108 pairs). This is a common-language effect size, with $0.5$ meaning no difference. For the trace we also report the exact split of $\log_2(\overline{\tr G}_{\mathrm{Adam}}/\overline{\tr G}_X)$ (geometric means) into an orbit-minimum term and an orbit-excess term via~\eqref{eq:factor}. 95\% confidence intervals come from a bootstrap that resamples runs within each seed, independently for the two optimizers (2000 resamples). The resampling unit is the training run, so the dependence between the many pairs that share a run is accounted for. The intervals treat the six configurations per seed as exchangeable; they describe uncertainty over this learning-rate and batch-size grid, not over optimizers in general. The loss targets are measured on the same runs, so agreement across targets is consistency, not independent replication.
 
 %===============================================================================
 \section{Results}
@@ -218,7 +221,29 @@ Ordinary training, and every optimizer comparison in \S\ref{sec:audit}, lives in
 \label{fig:flip}
 \end{figure}
 
-\paragraph{CIFAR-10.} Figure~\ref{fig:flip} and Table~\ref{tab:flip} summarize the audit. At every matched training loss, Adam is rated flatter than SGD by the original metric ($P=0.62$--$0.67$), isotropic average sharpness ($0.69$--$0.75$), the Hessian trace ($0.62$--$0.74$) and, most strongly, $\sum_i\sqrt{G_{ii}}$ ($0.84$--$1.00$). Minimum sharpness reverses the conclusion ($P=0.01$--$0.22$), as do $\MS_{1/2}$ ($0.01$--$0.19$), filter-normalized sharpness ($0.06$--$0.14$), multiplicative sharpness ($0.16$--$0.31$) and $\sum w_i^2G_{ii}$ ($0.04$--$0.24$). With 18 runs per optimizer the raw verdicts carry substantial uncertainty (e.g.\ $\tr G$ at loss $0.1$: $P=0.64$, 95\% CI $[0.44,0.83]$), whereas the invariant verdicts are tight ($\MS_1$: $0.01$, $[0.00,0.06]$). The quantity that matters, the disagreement between them, is well determined: $P_{\tr G}-P_{\MS_1}=+0.69$ $[+0.52,+0.83]$, $+0.63$ $[+0.43,+0.81]$ and $+0.50$ $[+0.34,+0.67]$ at losses $0.3$, $0.1$ and $0.01$. The exact split explains this. In bits, $\log_2(\tr G_{\mathrm{Adam}}/\tr G_{\mathrm{SGD}})$ decomposes into a orbit-minimum term of $+0.52$ $[+0.36,+0.68]$, $+0.71$ $[+0.53,+0.87]$ and $+0.43$ $[+0.16,+0.71]$ (Adam sharper), and a coordinate term of $-1.03$ $[-1.17,-0.91]$, $-1.02$ $[-1.16,-0.87]$ and $-1.05$ $[-1.22,-0.89]$, a factor of almost exactly $2$ in Adam's favour at every loss level. The coordinate term is not driven by a few runs: Adam's orbit excess is lower than SGD's in all 108 seed-matched configuration pairs at each of these losses (median log-ratio $-1.02$ to $-1.06$ bits), and leaving out any one of the three seeds changes the coordinate term by at most $0.01$ bits and $P_{\MS_1}$ by at most $0.03$. Against SGD+M the coordinate term is larger still ($-0.94$ to $-1.33$ bits). Against SAM, the one optimizer designed to seek flat minima, the raw trace is inconclusive ($P=0.44$--$0.60$) because a large orbit-minimum term ($+0.69$ to $+1.00$ bits, SAM flatter) is cancelled by the coordinate term ($-0.69$ to $-0.92$). Invariant measures identify SAM as clearly flatter ($P=0.00$--$0.23$). A measure that fails this sanity check should not be used to rank optimizers.
+\begin{table}[t]
+\centering
+\small
+\caption{Main effects on the CIFAR-10 MLP, at matched training loss $0.3$ / $0.1$ / $0.01$, with 95\% bootstrap intervals (resampling runs within seeds). Adam vs.\ SGD: 18 independent runs each (2 learning rates $\times$ 3 batch sizes $\times$ 3 seeds), 108 seed-matched configuration pairs per loss. Bits are $\log_2$ of the ratio of geometric means (negative: Adam lower). Adam-Q vs.\ Adam: median ratio over the 73 loss-matched checkpoint pairs from 18 configurations, bootstrap over configurations.}
+\label{tab:main}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Quantity & $L=0.3$ & $L=0.1$ & $L=0.01$\\
+\midrule
+$P(\text{Adam flatter than SGD})$, raw $\tr G$ & $0.75$ $[0.56,0.91]$ & $0.64$ $[0.44,0.83]$ & $0.72$ $[0.52,0.89]$\\
+$P(\text{Adam flatter than SGD})$, $\MS_1$ & $0.06$ $[0.00,0.17]$ & $0.01$ $[0.00,0.06]$ & $0.22$ $[0.07,0.41]$\\
+Raw trace, Adam/SGD (bits) & $-0.51$ $[-0.80,-0.24]$ & $-0.31$ $[-0.63,-0.02]$ & $-0.62$ $[-1.04,-0.20]$\\
+\quad $=$ orbit-minimum term & $+0.52$ $[+0.36,+0.68]$ & $+0.71$ $[+0.53,+0.87]$ & $+0.43$ $[+0.16,+0.71]$\\
+\quad $+$ orbit-excess term & $-1.03$ $[-1.17,-0.91]$ & $-1.02$ $[-1.16,-0.87]$ & $-1.05$ $[-1.22,-0.89]$\\
+Pairs with lower orbit excess for Adam & 108/108 & 108/108 & 108/108\\
+\midrule
+Adam-Q/Adam, raw $\tr G$ (all losses) & \multicolumn{3}{c}{$\times1.91$ $[1.84,1.95]$}\\
+Adam-Q/Adam, $\MS_1$ (all losses) & \multicolumn{3}{c}{$\times0.98$ $[0.97,1.01]$}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{CIFAR-10.} Table~\ref{tab:main} collects the main effects with their uncertainty; Figure~\ref{fig:flip} and Table~\ref{tab:flip} show the full audit. At every matched training loss, Adam is rated flatter than SGD by the original metric ($P=0.62$--$0.67$), isotropic average sharpness ($0.69$--$0.75$), the Hessian trace ($0.62$--$0.74$) and, most strongly, $\sum_i\sqrt{G_{ii}}$ ($0.84$--$1.00$). Minimum sharpness reverses the conclusion ($P=0.01$--$0.22$), as do $\MS_{1/2}$ ($0.01$--$0.19$), filter-normalized sharpness ($0.06$--$0.14$), multiplicative sharpness ($0.16$--$0.31$) and $\sum w_i^2G_{ii}$ ($0.04$--$0.24$). With 18 runs per optimizer the raw verdicts carry substantial uncertainty (e.g.\ $\tr G$ at loss $0.1$: $P=0.64$, 95\% CI $[0.44,0.83]$), whereas the invariant verdicts are tight ($\MS_1$: $0.01$, $[0.00,0.06]$). The quantity that matters, the disagreement between them, is well determined: $P_{\tr G}-P_{\MS_1}=+0.69$ $[+0.52,+0.83]$, $+0.63$ $[+0.43,+0.81]$ and $+0.50$ $[+0.34,+0.67]$ at losses $0.3$, $0.1$ and $0.01$. The exact split explains this. In bits, $\log_2(\tr G_{\mathrm{Adam}}/\tr G_{\mathrm{SGD}})$ decomposes into a orbit-minimum term of $+0.52$ $[+0.36,+0.68]$, $+0.71$ $[+0.53,+0.87]$ and $+0.43$ $[+0.16,+0.71]$ (Adam sharper), and a coordinate term of $-1.03$ $[-1.17,-0.91]$, $-1.02$ $[-1.16,-0.87]$ and $-1.05$ $[-1.22,-0.89]$, a factor of almost exactly $2$ in Adam's favour at every loss level. The coordinate term is not driven by a few runs: Adam's orbit excess is lower than SGD's in all 108 seed-matched configuration pairs at each of these losses (median log-ratio $-1.02$ to $-1.06$ bits), and leaving out any one of the three seeds changes the coordinate term by at most $0.01$ bits and $P_{\MS_1}$ by at most $0.03$. Against SGD+M the coordinate term is larger still ($-0.94$ to $-1.33$ bits). Against SAM, the one optimizer designed to seek flat minima, the raw trace is inconclusive ($P=0.44$--$0.60$) because a large orbit-minimum term ($+0.69$ to $+1.00$ bits, SAM flatter) is cancelled by the coordinate term ($-0.69$ to $-0.92$). Invariant measures identify SAM as clearly flatter ($P=0.00$--$0.23$). A measure that fails this sanity check should not be used to rank optimizers.
 
 \textbf{Robustness to the learning-rate pairing.} Sharpness depends strongly on the learning rate, so we also split the comparison by the pair of base learning rates (Table~\ref{tab:lrpairs}, pooled over batch sizes, seeds and losses $0.1$--$0.01$). On CIFAR-10 the raw verdict is set by the pairing: $P$ for $\tr G$ is $1.00$, $0.06$, $1.00$ and $0.60$ in the four pairings, and the original metric ranges from $0.00$ to $1.00$. Minimum sharpness rates Adam sharper in all four pairings ($P\le0.27$), and so does filter-normalized sharpness ($P\le0.09$). On MNIST both raw and invariant verdicts depend on the pairing ($\MS_1$: $0.00$--$0.88$), consistent with the small functional differences there.
 
@@ -444,11 +469,11 @@ Claim & Evidence & Scope\\
 \textbf{Limitations.} Apart from ResNet-18, the experiments are small: MLPs and a small CNN on 10k-example subsets, trained on a CPU. Our theory covers only the ReLU rescaling symmetry. With BatchNorm (\S\ref{sec:bn}) raw measures are dominated by a second, learning-rate-driven scale symmetry. Our one larger network, ResNet-18 on full CIFAR-10, has BatchNorm after every convolution, so it tests this regime and not the ReLU-orbit decomposition, which remains tested only on networks without normalization; its standard-recipe comparison rests on three seeds. The learning-rate grids are broad but finite. Our explanation of \emph{why} Adam's drift ends near minimum sharpness is a heuristic. Finally, our evidence that the drift helps Adam train (\S\ref{sec:intervention}) comes from one MLP on CIFAR-10. The noise-floor explanation is a heuristic that predicts the direction of the effect, not its size, and whether it matters in larger networks is open.
 
 \section{Conclusion}
-A well-known theoretical caveat, that sharpness depends on the parameterization, has a concrete and systematic practical consequence. Adam breaks the rescaling conservation law that SGD obeys at first order, drifts at a rate $\propto\eta\sqrt{\text{fan-in}}$, and, in the networks we studied, holds its solutions near the flattest representation on their symmetry orbits. The resulting coordinate factor can reverse, flip or mask optimizer flatness rankings, and it weakens sharpness--generalization correlations across optimizers. With BatchNorm a second scale symmetry takes over: raw comparisons then follow weight norms set by the learning rate and weight decay, in a direction that differed between the two normalized networks we studied. Measures invariant to all per-weight rescalings are unaffected by both symmetries (under BatchNorm up to its $\epsilon$). Beyond measurement, the rescaling orbit is a useful probe of optimizer dynamics: it separates a fast, first-order drift of adaptive methods from a slow, noise-driven drift whose destination differs between SGD and Adam as implicit-regularization theory predicts.
+A well-known theoretical caveat, that sharpness depends on the parameterization, has a concrete and systematic practical consequence. Adam breaks the rescaling conservation law that SGD obeys at first order, drifts at a rate approximately $\propto\eta\sqrt{\text{fan-in}}$ at small learning rates, and, in the networks we studied, holds its solutions near the flattest representation on their symmetry orbits. The resulting coordinate factor can reverse, flip or mask optimizer flatness rankings, and it weakens sharpness--generalization correlations across optimizers. With BatchNorm a second scale symmetry takes over: raw comparisons then follow weight norms set by the learning rate and weight decay, in a direction that differed between the two normalized networks we studied. Measures invariant to all per-weight rescalings are unaffected by both symmetries (under BatchNorm up to its $\epsilon$). Beyond measurement, the rescaling orbit is a useful probe of optimizer dynamics: it separates a fast, first-order drift of adaptive methods from a slow, noise-driven drift whose destination differs between SGD and Adam as implicit-regularization theory predicts.
 
-\paragraph{Code and data.} All code, configurations and per-run results (training curves and all measures at every checkpoint) are available at \url{https://github.com/Ashvinj2004/LossLandscape-Research}.
+\paragraph{Code and data.} All code, configurations and per-run results (training curves and all measures at every checkpoint) are \ifdefined\ANON provided as supplementary material and will be released publicly.\else available at \url{https://github.com/Ashvinj2004/LossLandscape-Research}.\fi
 
-\bibliographystyle{plainnat}
+\bibliographystyle{tmlr}
 \bibliography{refs}
 
 \appendix
