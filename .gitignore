@@ -14,3 +14,6 @@ LossLandscapeProject/research/paper/icml/*.log
 LossLandscapeProject/research/paper/icml/*.out
 LossLandscapeProject/research/paper/icml/*.bbl
 LossLandscapeProject/research/paper/icml/*.blg
+
+# anonymous review build (submitted directly, not published)
+LossLandscapeProject/research/paper/main_anon.pdf
