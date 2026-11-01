@@ -91,7 +91,7 @@ Let $Q_j=\|a_j\|^2-\|c_j\|^2$. For an update $\theta^+=\theta+u$, expanding the 
 
 \begin{proposition}\label{prop:drift}
 \textbf{(a) SGD.} For $u=-\eta\nabla\ell_B$ on any minibatch $B$, $D^{(1)}_j=0$ exactly.
-\textbf{(b) Heavy-ball momentum.} $D^{(1)}_j$ is a sum of terms each containing a parameter difference $\theta_t-\theta_{t-k}=O(\eta)$, so the drift is second order in $\eta$ (with a $\beta$-dependent prefactor that we do not bound).
+\textbf{(b) Heavy-ball momentum} (buffer started at zero). $D^{(1)}_j$ is a sum of terms each containing a parameter difference $\theta_t-\theta_{t-k}=O(\eta)$, so the drift is second order in $\eta$ (with a $\beta$-dependent prefactor that we do not bound).
 \textbf{(c) Diagonal preconditioning} (Adam, RMSProp, sign descent). For $u=-\eta P^{-1}m$ with diagonal $P\succ0$, $D^{(1)}_j=-2\eta\big(\langle a_j,P_a^{-1}m_a\rangle-\langle c_j,P_c^{-1}m_c\rangle\big)$, which is generically nonzero. For sign descent, $D^{(1)}_j=2\eta(\rho_a\|a_j\|_1-\rho_c\|c_j\|_1)$ with $\rho_x\in[-1,1]$ the $\ell_1$-weighted net fraction of coordinates moving away from zero.
 \textbf{(d) SAM} with radius $r$: $D^{(1)}_j=2\eta(\langle\varepsilon_{a_j},\tilde g_a\rangle-\langle\varepsilon_{c_j},\tilde g_c\rangle)$, with $\varepsilon$ the ascent step and $\tilde g$ the gradient at $\theta+\varepsilon$: first order in $\eta$, proportional to $r$.
 \end{proposition}
@@ -115,7 +115,7 @@ $H=G+\frac1N\sum_{n,k}\frac{\partial\ell}{\partial f_k}\nabla^2f_k$, and with th
 $H\ne G$ off the diagonal, so we compute $\lambda_{\max}$ from $H$; the trace, $\MS_p$ and the decomposition below are the same for both in our MLPs and CNN (checked to $5\times10^{-16}$ in float64; the Hutchinson $\tr H$ matches the exact $\tr G$ within its sampling error at all 913 MLP checkpoints). With BatchNorm the lemma fails (diagonals differ by up to $94\%$), so \S\ref{sec:bn} uses Hessian-based measures only.
 
 \begin{definition}[Minimum sharpness and orbit excess]
-Following \citet{ibayashi2021minimum}, for $p>0$ let $\MS_p(\theta)=\min_{\theta'\in\mathrm{orbit}(\theta)}\sum_iG_{ii}(\theta')^{p}$. $\MS_1$ is the minimal trace and $\MS_{1/2}$ the orbit minimum of Adam's implicit regularizer \citep{li2025adam}. The \emph{orbit excess} is $E=\tr G/\MS_1\ge1$, so that
+Following \citet{ibayashi2021minimum}, for $p>0$ let $\MS_p(\theta)=\inf_{\theta'\in\mathrm{orbit}(\theta)}\sum_iG_{ii}(\theta')^{p}$. $\MS_1$ is the minimal trace and $\MS_{1/2}$ the orbit minimum of $\sum_iG_{ii}^{1/2}$, which \citet{li2025adam} prove Adam reduces under label noise and their assumptions. The \emph{orbit excess} is $E=\tr G/\MS_1\ge1$, so that
 \begin{equation}\label{eq:factor}
 \tr G(\theta)=\underbrace{\MS_1(\theta)}_{\text{orbit minimum}}\times\underbrace{E(\theta)}_{\text{orbit excess}}.
 \end{equation}

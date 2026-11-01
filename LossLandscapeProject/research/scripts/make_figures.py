@@ -65,7 +65,7 @@ FLIP_MEASURES = [  # (display, column, family)
     ("Original metric: rel. iso. ΔL/L (test)", "orig_rel_sharp_test", "raw"),
     ("Isotropic avg. sharpness", "avg_iso_0.01", "raw"),
     ("Hessian trace", "hess_trace", "raw"),
-    ("Σ √diag G  (Adam's implicit reg.)", "ggn_sqrt_trace", "raw"),
+    ("Σ √diag G", "ggn_sqrt_trace", "raw"),
     ("λ_max", "lambda_max", "raw"),
     ("Minimum sharpness (min. trace over orbit)", "orbitmin_trace", "inv"),
     ("Orbit-min Σ √diag G", "orbitmin_sqrt_trace", "inv"),
